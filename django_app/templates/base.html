@@ -102,16 +102,16 @@
         }
 
         .sidebar-logo img {
-            height: 75px;
+            height: 65px;
             object-fit: contain;
         }
 
         .sidebar-logo-text {
-            font-size: 17px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--topbar-muted);
             line-height: 1.4;
-            letter-spacing: 0.3px;
+            letter-spacing: 4.3px;
         }
 
         /* ===== SIDEBAR NAV - نفس لون اللوجو بـ opacity أقل ===== */
@@ -971,6 +971,17 @@
             display: block;
             opacity: 0.25;
         }
+
+        /* ===== FOOTER ===== */
+        .site-footer {
+            margin-top: 32px;
+            padding: 16px 0 8px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+            letter-spacing: 0.3px;
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -1080,6 +1091,9 @@
     <!-- ===== MAIN ===== -->
     <main class="main">
         {% block content %}{% endblock %}
+        <footer class="site-footer">
+            © 2026 Nile Techno — All rights reserved &nbsp;|&nbsp; Design by Abdullah Elsawy
+        </footer>
     </main>
 
     {% block extra_js %}{% endblock %}

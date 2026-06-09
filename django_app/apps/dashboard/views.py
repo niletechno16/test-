@@ -44,7 +44,7 @@ def home(request):
     cursor.execute(f"SELECT COUNT(*) AS total FROM Customer_service_reports_by_A {where}")
     total_reports = cursor.fetchone()['total']
 
-    cursor.execute(f"SELECT COUNT(*) AS total FROM Customer_service_reports_by_A {where} AND classification LIKE N'تم%'")
+    cursor.execute(f"SELECT COUNT(*) AS total FROM Customer_service_reports_by_A {where} AND classification LIKE N'تم حل%'")
     total_resolved = cursor.fetchone()['total']
 
     cursor.execute(f"SELECT COUNT(*) AS total FROM Customer_service_reports_by_A {where} AND classification LIKE N'لم يتم%'")
@@ -77,6 +77,8 @@ def home(request):
 
     resolved_pct   = round(total_resolved / total_reports * 100) if total_reports else 0
     unresolved_pct = round(total_unresolved / total_reports * 100) if total_reports else 0
+
+    # تأكد إن المجموع منطقي — لو الاثنين صفر مع وجود تقارير، يبقى فيه تصنيفات أخرى
 
     return render(request, 'dashboard/home.html', {
         'total_reports':       total_reports,
