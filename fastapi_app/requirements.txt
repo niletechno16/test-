@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+requests
+arabic-reshaper
+python-bidi
+groq
+google-generativeai
+cerebras-cloud-sdk
+pymssql

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}التقارير{% endblock %}
+
+{% block extra_css %}
+<style>
+  .summary-cell { max-width:260px; color:var(--muted); font-size:13px; line-height:1.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-title"><i class="fa-solid fa-file-lines"></i> التقارير</div>
+
+<!-- Filters -->
+<form method="get">
+  <div class="filters-bar">
+    {% if is_manager %}
+    <select class="select-input" name="agent">
+      <option value="">كل الأيجنت</option>
+      {% for a in agents %}
+      <option value="{{ a }}" {% if filters.agent == a %}selected{% endif %}>{{ a }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+    <input class="search-input" type="text" name="classification"
+           placeholder="فلتر بالتصنيف..." value="{{ filters.classification }}"
+           style="min-width:180px">
+    <input type="hidden" name="from" value="{{ date_from }}">
+    <input type="hidden" name="to"   value="{{ date_to }}">
+    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> فلتر</button>
+    <a href="{% url 'reports_list' %}" class="btn btn-ghost"><i class="fa-solid fa-xmark"></i> مسح</a>
+    <a href="{% url 'monthly' %}" class="btn btn-ghost" style="margin-right:auto">
+      <i class="fa-solid fa-calendar-days"></i> تقرير شهري
+    </a>
+  </div>
+</form>
+
+<div class="card">
+  <div class="section-title">{{ data|length }} نتيجة</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>المحادثة</th>
+          <th>العميل</th>
+          <th>الهاتف</th>
+          <th>الأيجنت</th>
+          <th>التصنيف</th>
+          <th>التاريخ</th>
+          <th>الوقت</th>
+          <th>الملخص</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in data %}
+        <tr>
+          <td><span class="badge badge-blue"># {{ r.conv_id }}</span></td>
+          <td>{{ r.customer_name }}</td>
+          <td style="direction:ltr;font-size:13px">{{ r.customer_phone }}</td>
+          <td>{{ r.agent_name }}</td>
+          <td>
+            {% if 'تم' in r.classification %}
+              <span class="badge badge-green">{{ r.classification }}</span>
+            {% elif 'لم يتم' in r.classification %}
+              <span class="badge badge-red">{{ r.classification }}</span>
+            {% else %}
+              <span class="badge badge-yellow">{{ r.classification }}</span>
+            {% endif %}
+          </td>
+          <td>{{ r.resolved_date }}</td>
+          <td>{{ r.resolved_time }}</td>
+          <td class="summary-cell">{{ r.summary|truncatechars:70 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:40px">لا توجد نتائج</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

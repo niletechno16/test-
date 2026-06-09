@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% block title %}الرئيسية{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .chart-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 22px;
+    }
+
+    .chart-card canvas {
+        max-height: 220px;
+    }
+
+    .problems-list {
+        list-style: none;
+    }
+
+    .problems-list li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(46, 50, 80, .5);
+        font-size: 14px;
+    }
+
+    .problems-list li:last-child {
+        border-bottom: none;
+    }
+
+    .problems-list .rank {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        background: var(--surface2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        margin-left: 10px;
+        flex-shrink: 0;
+    }
+
+    .problems-list .prob-text {
+        flex: 1;
+        color: var(--text);
+    }
+
+    .problems-list .prob-count {
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .pie-wrap {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .pie-wrap canvas {
+        max-width: 180px;
+        max-height: 180px;
+    }
+
+    .pie-legend {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .pie-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+    }
+
+    .pie-legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-title"><i class="fa-solid fa-house"></i> لوحة التحكم</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="icon" style="background:rgba(79,110,247,.15);color:var(--accent)">
+            <i class="fa-solid fa-comments"></i>
+        </div>
+        <div>
+            <div class="label">إجمالي المحادثات</div>
+            <div class="value">{{ total_reports }}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="icon" style="background:rgba(34,197,94,.15);color:var(--green)">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div>
+            <div class="label">تم الحل</div>
+            <div class="value" style="color:var(--green)">{{ total_resolved }}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="icon" style="background:rgba(239,68,68,.15);color:var(--red)">
+            <i class="fa-solid fa-circle-xmark"></i>
+        </div>
+        <div>
+            <div class="label">لم يتم الحل</div>
+            <div class="value" style="color:var(--red)">{{ total_unresolved }}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="icon" style="background:rgba(245,158,11,.15);color:var(--yellow)">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <div>
+            <div class="label">إجمالي العملاء</div>
+            <div class="value" style="color:var(--yellow)">{{ total_customers }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-grid">
+
+    <!-- أكتر أيجنت حل -->
+    <div class="chart-card">
+        <div class="section-title">أكثر أيجنت حل مشاكل</div>
+        <canvas id="agentsChart"></canvas>
+    </div>
+
+    <!-- أكتر عميل تواصل -->
+    <div class="chart-card">
+        <div class="section-title">أكثر العملاء تواصلاً</div>
+        <canvas id="customersChart"></canvas>
+    </div>
+
+    <!-- نسبة الحل -->
+    <div class="chart-card">
+        <div class="section-title">نسبة الحل</div>
+        <div class="pie-wrap">
+            <canvas id="pieChart"></canvas>
+            <div class="pie-legend">
+                <div class="pie-legend-item">
+                    <div class="pie-legend-dot" style="background:var(--green)"></div>
+                    <div>
+                        <div style="font-weight:700;font-size:18px;color:var(--green)">{{ resolved_pct }}%</div>
+                        <div style="font-size:12px;color:var(--muted)">تم الحل</div>
+                    </div>
+                </div>
+                <div class="pie-legend-item">
+                    <div class="pie-legend-dot" style="background:var(--red)"></div>
+                    <div>
+                        <div style="font-weight:700;font-size:18px;color:var(--red)">{{ unresolved_pct }}%</div>
+                        <div style="font-size:12px;color:var(--muted)">لم يتم الحل</div>
+                    </div>
+                </div>
+                <div class="pie-legend-item">
+                    <div class="pie-legend-dot" style="background:var(--yellow)"></div>
+                    <div>
+                        <div style="font-weight:700;font-size:18px;color:var(--yellow)">{{ total_reports }}</div>
+                        <div style="font-size:12px;color:var(--muted)">إجمالي</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- أكتر مشكلة اتكررت -->
+    <div class="chart-card">
+        <div class="section-title">أكثر المشاكل تكراراً</div>
+        <ul class="problems-list">
+            {% for p in common_problems %}
+            <li>
+                <span class="rank">{{ forloop.counter }}</span>
+                <span class="prob-text">{{ p.classification }}</span>
+                <span class="prob-count">{{ p.total }}</span>
+            </li>
+            {% empty %}
+            <li><span style="color:var(--muted)">لا توجد بيانات</span></li>
+            {% endfor %}
+        </ul>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+    const chartDefaults = {
+        color: '#8b91b0',
+        font: { family: 'Cairo' }
+    };
+    Chart.defaults.color = chartDefaults.color;
+    Chart.defaults.font.family = chartDefaults.font.family;
+
+    const gridColor = 'rgba(46,50,80,0.6)';
+
+    // Agents Bar
+    new Chart(document.getElementById('agentsChart'), {
+        type: 'bar',
+        data: {
+            labels: [{% for a in top_agents_resolved %}"{{ a.agent_name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'محادثات محلولة',
+            data: [{% for a in top_agents_resolved %}{{ a.total }}{% if not forloop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: 'rgba(79,110,247,0.7)',
+        borderRadius: 8,
+            borderSkipped: false,
+    }]
+  },
+    options: {
+        responsive: true, maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+        scales: {
+            y: { grid: { color: gridColor }, ticks: { stepSize: 1 } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+    // Customers Bar
+    new Chart(document.getElementById('customersChart'), {
+        type: 'bar',
+        data: {
+            labels: [{% for c in top_customers %}"{{ c.customer_name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'عدد المحادثات',
+            data: [{% for c in top_customers %}{{ c.total }}{% if not forloop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: 'rgba(124,58,237,0.7)',
+        borderRadius: 8,
+            borderSkipped: false,
+    }]
+  },
+    options: {
+        responsive: true, maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+        scales: {
+            y: { grid: { color: gridColor }, ticks: { stepSize: 1 } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+    // Pie
+    new Chart(document.getElementById('pieChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['تم الحل', 'لم يتم الحل'],
+            datasets: [{
+                data: [{{ total_resolved }}, {{ total_unresolved }}],
+        backgroundColor: ['rgba(34,197,94,0.8)', 'rgba(239,68,68,0.8)'],
+        borderColor: ['#22c55e', '#ef4444'],
+        borderWidth: 2,
+    }]
+  },
+        options: {
+        responsive: true, maintainAspectRatio: true,
+        cutout: '72%',
+        plugins: { legend: { display: false } }
+    }
+});
+</script>
+{% endblock %}

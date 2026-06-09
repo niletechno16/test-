@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}{{ customer.customer_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .customer-header {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .customer-header .big-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--yellow), #f97316);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        font-weight: 800;
+        flex-shrink: 0;
+        color: #000;
+    }
+
+    .customer-header .info .name {
+        font-size: 20px;
+        font-weight: 800;
+    }
+
+    .customer-header .info .phone {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 4px;
+    }
+
+    .customer-header .info .id {
+        color: var(--muted);
+        font-size: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:20px">
+    <a href="{% url 'customers_list' %}" class="btn btn-ghost">
+        <i class="fa-solid fa-arrow-right"></i> رجوع
+    </a>
+</div>
+
+<div class="customer-header">
+    <div class="big-avatar">{{ customer.customer_name|first }}</div>
+    <div class="info">
+        <div class="name">{{ customer.customer_name }}</div>
+        <div class="phone"><i class="fa-solid fa-phone"></i> {{ customer.customer_phone }}</div>
+        <div class="id">ID: {{ customer.customer_id }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="section-title">سجل المحادثات ({{ reports|length }})</div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>رقم المحادثة</th>
+                    <th>الأيجنت</th>
+                    <th>التصنيف</th>
+                    <th>التاريخ</th>
+                    <th>الوقت</th>
+                    <th>الملخص</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reports %}
+                <tr>
+                    <td><span class="badge badge-blue"># {{ r.conv_id }}</span></td>
+                    <td>{{ r.agent_name }}</td>
+                    <td>
+                        {% if 'تم' in r.classification %}
+                        <span class="badge badge-green">{{ r.classification }}</span>
+                        {% elif 'لم يتم' in r.classification %}
+                        <span class="badge badge-red">{{ r.classification }}</span>
+                        {% else %}
+                        <span class="badge badge-yellow">{{ r.classification }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ r.resolved_date }}</td>
+                    <td>{{ r.resolved_time }}</td>
+                    <td style="max-width:300px;color:var(--muted);font-size:13px">{{ r.summary|truncatechars:80 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align:center;color:var(--muted);padding:30px">لا توجد محادثات</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
