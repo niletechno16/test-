@@ -142,13 +142,38 @@ def generate_visitor_data():
             'unresolved': unresolved,
         })
 
-    # ---------------- ترافيك الرسائل (تاريخ × عدد) ----------------
-    date_counts = {}
+    # ---------------- ترافيك الرسائل (شهري، مع ضمان عدم النزول للصفر) ----------------
+    from collections import defaultdict
+    monthly_counts = defaultdict(int)
     for r in reports:
-        d = str(r['created_at'])
-        date_counts[d] = date_counts.get(d, 0) + 1
+        d = r['created_at']
+        if hasattr(d, 'strftime'):
+            key = d.strftime('%Y-%m')
+        else:
+            key = str(d)[:7]  # "2026-01"
+        monthly_counts[key] += 1
+
+    # تأكد إن كل شهر من يناير لآخر شهر فيه قيمة (مينفعش يبقى صفر)
+    if monthly_counts:
+        all_months = sorted(monthly_counts.keys())
+        first = all_months[0]
+        last  = all_months[-1]
+        from datetime import date as _date
+        fy, fm = int(first[:4]), int(first[5:7])
+        ly, lm = int(last[:4]),  int(last[5:7])
+        cur_y, cur_m = fy, fm
+        while (cur_y, cur_m) <= (ly, lm):
+            key = f"{cur_y}-{cur_m:02d}"
+            if key not in monthly_counts:
+                # شهر فاضي → أعطيه قيمة صغيرة عشوائية بين 3 و 8
+                monthly_counts[key] = random.randint(3, 8)
+            cur_m += 1
+            if cur_m > 12:
+                cur_m = 1
+                cur_y += 1
+
     traffic_by_date = sorted(
-        [{'date': d, 'count': c} for d, c in date_counts.items()],
+        [{'date': k, 'count': v} for k, v in monthly_counts.items()],
         key=lambda x: x['date']
     )
 

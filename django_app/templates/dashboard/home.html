@@ -246,19 +246,32 @@
         type: 'bar',
         data: {
             labels: [{% for a in top_agents_resolved %}"{{ a.agent_name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
-            datasets: [{
-                label: 'محادثات محلولة',
-                data: [{% for a in top_agents_resolved %}{{ a.total }}{% if not forloop.last %}, {% endif %}{% endfor %}],
-                backgroundColor: 'rgba(79,110,247,0.7)',
-                borderRadius: 8,
-                borderSkipped: false,
-                barPercentage: 0.25,
-                categoryPercentage: 0.5,
-            }]
+            datasets: [
+                {
+                    label: 'محلول',
+                    data: [{% for a in top_agents_resolved %}{{ a.resolved }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: 'rgba(34,197,94,0.75)',
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    barPercentage: 0.55,
+                    categoryPercentage: 0.6,
+                },
+                {
+                    label: 'غير محلول',
+                    data: [{% for a in top_agents_resolved %}{{ a.unresolved }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: 'rgba(239,68,68,0.75)',
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    barPercentage: 0.55,
+                    categoryPercentage: 0.6,
+                },
+            ]
         },
         options: {
             responsive: true, maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
+            plugins: {
+                legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 11 } } }
+            },
             scales: {
                 y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
                 x: { grid: { display: false }, border: { display: false } }
@@ -277,8 +290,8 @@
                 backgroundColor: 'rgba(124,58,237,0.7)',
                 borderRadius: 8,
                 borderSkipped: false,
-                barPercentage: 0.25,
-                categoryPercentage: 0.5,
+                barPercentage: 0.55,
+                categoryPercentage: 0.6,
             }]
         },
         options: {
@@ -344,24 +357,28 @@
                 data: [{% for t in traffic_by_date %}{{ t.count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
                 borderColor: 'rgba(37,99,235,0.9)',
                 backgroundColor: 'rgba(37,99,235,0.08)',
-                borderWidth: 2,
-                pointRadius: 0,
-                pointHoverRadius: 4,
+                borderWidth: 2.5,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                pointBackgroundColor: 'rgba(37,99,235,0.9)',
                 fill: true,
-                tension: 0.4,
+                tension: 0.45,
             }]
         },
         options: {
             responsive: true, maintainAspectRatio: true,
             plugins: { legend: { display: false } },
             scales: {
-                y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
+                y: {
+                    grid: { display: false },
+                    border: { display: false },
+                    ticks: { stepSize: 1 },
+                    suggestedMin: 2,
+                },
                 x: {
-                    grid: { display: false }, border: { display: false },
-                    ticks: {
-                        maxTicksLimit: 8,
-                        maxRotation: 0,
-                    }
+                    grid: { display: false },
+                    border: { display: false },
+                    ticks: { maxRotation: 0, maxTicksLimit: 8 }
                 }
             }
         }
