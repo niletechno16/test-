@@ -124,6 +124,12 @@
                 <div class="s-lbl">غير محلول</div>
             </div>
         </div>
+        {% if c.avg_resolution_minutes %}
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:11px;color:var(--muted)">متوسط وقت الحل</span>
+            <span style="font-size:14px;font-weight:800;color:var(--blue)">{{ c.avg_resolution_minutes }} د</span>
+        </div>
+        {% endif %}
     </a>
     {% endfor %}
 </div>

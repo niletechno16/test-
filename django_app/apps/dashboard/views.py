@@ -14,18 +14,20 @@ def home(request):
     if get_role(request.user) == 'visitor':
         vdata = get_visitor_data(request)
         return render(request, 'dashboard/home.html', {
-            'total_reports':       vdata['total_reports'],
-            'total_resolved':      vdata['total_resolved'],
-            'total_unresolved':    vdata['total_unresolved'],
-            'total_customers':     vdata['total_customers'],
-            'top_agents_resolved': vdata['top_agents_resolved'],
-            'top_customers':       vdata['top_customers'],
-            'common_problems':     vdata['common_problems'],
-            'resolved_pct':        vdata['resolved_pct'],
-            'unresolved_pct':      vdata['unresolved_pct'],
-            'is_manager':          True,
-            'date_from':           date_from,
-            'date_to':             date_to,
+            'total_reports':               vdata['total_reports'],
+            'total_resolved':              vdata['total_resolved'],
+            'total_unresolved':            vdata['total_unresolved'],
+            'total_customers':             vdata['total_customers'],
+            'top_agents_resolved':         vdata['top_agents_resolved'],
+            'top_customers':               vdata['top_customers'],
+            'common_problems':             vdata['common_problems'],
+            'resolved_pct':                vdata['resolved_pct'],
+            'unresolved_pct':              vdata['unresolved_pct'],
+            'traffic_by_date':             vdata['traffic_by_date'],
+            'avg_resolution_by_customer':  vdata['avg_resolution_by_customer'],
+            'is_manager':                  True,
+            'date_from':                   date_from,
+            'date_to':                     date_to,
         })
 
     conn = get_connection()

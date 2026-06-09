@@ -47,6 +47,7 @@
           <th>التصنيف</th>
           <th>التاريخ</th>
           <th>الوقت</th>
+          <th>وقت الحل</th>
           <th>الملخص</th>
         </tr>
       </thead>
@@ -68,6 +69,13 @@
           </td>
           <td>{{ r.resolved_date }}</td>
           <td>{{ r.resolved_time }}</td>
+          <td>
+            {% if r.resolution_minutes %}
+              <span style="font-size:13px;font-weight:600;color:var(--blue)">{{ r.resolution_minutes }} د</span>
+            {% else %}
+              <span style="color:var(--muted);font-size:12px">—</span>
+            {% endif %}
+          </td>
           <td class="summary-cell">{{ r.summary|truncatechars:70 }}</td>
         </tr>
         {% empty %}

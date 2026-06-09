@@ -210,6 +210,23 @@
     </div>
 
 </div>
+
+<!-- Charts Row 2 -->
+<div class="charts-grid" style="grid-template-columns: 1fr 1fr;">
+
+    <!-- متوسط وقت الحل للعملاء -->
+    <div class="chart-card">
+        <div class="section-title">متوسط وقت الحل لكل عميل (دقيقة)</div>
+        <canvas id="customerAvgChart"></canvas>
+    </div>
+
+    <!-- ترافيك الرسائل -->
+    <div class="chart-card">
+        <div class="section-title">ترافيك الرسائل عبر الوقت</div>
+        <canvas id="trafficChart"></canvas>
+    </div>
+
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -229,46 +246,50 @@
         type: 'bar',
         data: {
             labels: [{% for a in top_agents_resolved %}"{{ a.agent_name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
-        datasets: [{
-            label: 'محادثات محلولة',
-            data: [{% for a in top_agents_resolved %}{{ a.total }}{% if not forloop.last %}, {% endif %} {% endfor %}],
-    backgroundColor: 'rgba(79,110,247,0.7)',
-        borderRadius: 8,
-            borderSkipped: false,
-    }]
-  },
-    options: {
-        responsive: true, maintainAspectRatio: true,
+            datasets: [{
+                label: 'محادثات محلولة',
+                data: [{% for a in top_agents_resolved %}{{ a.total }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: 'rgba(79,110,247,0.7)',
+                borderRadius: 8,
+                borderSkipped: false,
+                barPercentage: 0.25,
+                categoryPercentage: 0.5,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
             plugins: { legend: { display: false } },
-        scales: {
-            y: { grid: { color: gridColor }, ticks: { stepSize: 1 } },
-            x: { grid: { display: false } }
+            scales: {
+                y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
+                x: { grid: { display: false }, border: { display: false } }
+            }
         }
-    }
-});
+    });
 
     // Customers Bar
     new Chart(document.getElementById('customersChart'), {
         type: 'bar',
         data: {
             labels: [{% for c in top_customers %}"{{ c.customer_name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
-        datasets: [{
-            label: 'عدد المحادثات',
-            data: [{% for c in top_customers %}{{ c.total }}{% if not forloop.last %}, {% endif %} {% endfor %}],
-    backgroundColor: 'rgba(124,58,237,0.7)',
-        borderRadius: 8,
-            borderSkipped: false,
-    }]
-  },
-    options: {
-        responsive: true, maintainAspectRatio: true,
+            datasets: [{
+                label: 'عدد المحادثات',
+                data: [{% for c in top_customers %}{{ c.total }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: 'rgba(124,58,237,0.7)',
+                borderRadius: 8,
+                borderSkipped: false,
+                barPercentage: 0.25,
+                categoryPercentage: 0.5,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
             plugins: { legend: { display: false } },
-        scales: {
-            y: { grid: { color: gridColor }, ticks: { stepSize: 1 } },
-            x: { grid: { display: false } }
+            scales: {
+                y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
+                x: { grid: { display: false }, border: { display: false } }
+            }
         }
-    }
-});
+    });
 
     // Pie
     new Chart(document.getElementById('pieChart'), {
@@ -288,5 +309,62 @@
         plugins: { legend: { display: false } }
     }
 });
+    // Customer Avg Resolution Bar
+    new Chart(document.getElementById('customerAvgChart'), {
+        type: 'bar',
+        data: {
+            labels: [{% for c in avg_resolution_by_customer %}"{{ c.name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'متوسط وقت الحل (د)',
+                data: [{% for c in avg_resolution_by_customer %}{{ c.avg }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: 'rgba(245,158,11,0.7)',
+                borderRadius: 8,
+                borderSkipped: false,
+                barPercentage: 0.25,
+                categoryPercentage: 0.5,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 10 } },
+                x: { grid: { display: false }, border: { display: false } }
+            }
+        }
+    });
+
+    // Traffic Line Chart
+    new Chart(document.getElementById('trafficChart'), {
+        type: 'line',
+        data: {
+            labels: [{% for t in traffic_by_date %}"{{ t.date }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'عدد الرسائل',
+                data: [{% for t in traffic_by_date %}{{ t.count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                borderColor: 'rgba(37,99,235,0.9)',
+                backgroundColor: 'rgba(37,99,235,0.08)',
+                borderWidth: 2,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                fill: true,
+                tension: 0.4,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
+                x: {
+                    grid: { display: false }, border: { display: false },
+                    ticks: {
+                        maxTicksLimit: 8,
+                        maxRotation: 0,
+                    }
+                }
+            }
+        }
+    });
 </script>
 {% endblock %}
