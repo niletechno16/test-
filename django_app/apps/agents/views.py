@@ -1,16 +1,25 @@
-from urllib import request
-
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from db_connection import get_connection, is_manager_level, get_role
 from visitor_data import get_visitor_data
+from datetime import date
+import calendar
 
+ARABIC_MONTHS = {
+    1:'يناير',2:'فبراير',3:'مارس',4:'أبريل',5:'مايو',6:'يونيو',
+    7:'يوليو',8:'أغسطس',9:'سبتمبر',10:'أكتوبر',11:'نوفمبر',12:'ديسمبر'
+}
 
 @login_required
 def agents_list(request):
-    date_from = request.GET.get('from', '')
-    date_to   = request.GET.get('to', '')
+    today = date.today()
+    default_from = today.replace(day=1).strftime('%Y-%m-%d')
+    last_day     = calendar.monthrange(today.year, today.month)[1]
+    default_to   = today.replace(day=last_day).strftime('%Y-%m-%d')
+    date_from = request.GET.get('from', default_from)
+    date_to   = request.GET.get('to',   default_to)
     search    = request.GET.get('search', '')
+    month_label = f"{ARABIC_MONTHS[today.month]} {today.year}" 
 
     if get_role(request.user) == 'visitor':
         vdata = get_visitor_data(request)
@@ -20,6 +29,7 @@ def agents_list(request):
         return render(request, 'agents/index.html', {
             'agents': agents, 'is_manager': True,
             'search': search, 'date_from': date_from, 'date_to': date_to,
+            'month_label': month_label,
         })
     conn = get_connection()
     cursor = conn.cursor(as_dict=True)
@@ -47,13 +57,18 @@ def agents_list(request):
     return render(request, 'agents/index.html', {
         'agents': agents, 'is_manager': is_manager_level(request.user),
         'search': search, 'date_from': date_from, 'date_to': date_to,
+        'month_label': month_label,
     })
 
 
 @login_required
 def agent_detail(request, agent_id):
-    date_from = request.GET.get('from', '')
-    date_to   = request.GET.get('to', '')
+    today = date.today()
+    default_from = today.replace(day=1).strftime('%Y-%m-%d')
+    last_day     = calendar.monthrange(today.year, today.month)[1]
+    default_to   = today.replace(day=last_day).strftime('%Y-%m-%d')
+    date_from = request.GET.get('from', default_from)
+    date_to   = request.GET.get('to',   default_to)
 
     if get_role(request.user) == 'visitor':
         vdata = get_visitor_data(request)

@@ -86,7 +86,7 @@
     <div class="quick-stats">
         <div class="qs">
             <div class="v">{{ reports|length }}</div>
-            <div class="l">إجمالي</div>
+            <div class="l" data-ar="إجمالي" data-en="Total">إجمالي</div>
         </div>
         <div class="qs">
             <div class="v" style="color:var(--green)">
@@ -99,7 +99,7 @@
         {% if agent.avg_resolution_minutes %}
         <div class="qs">
             <div class="v" style="color:var(--blue)">{{ agent.avg_resolution_minutes }}</div>
-            <div class="l">متوسط وقت الحل (د)</div>
+            <div class="l" data-ar="متوسط وقت الحل (د)" data-en="Avg. Resolution (min)">متوسط وقت الحل (د)</div>
         </div>
         {% endif %}
     </div>
@@ -107,18 +107,18 @@
 
 <!-- Reports Table -->
 <div class="card">
-    <div class="section-title">سجل المحادثات ({{ reports|length }})</div>
+    <div class="section-title"><span data-ar="سجل المحادثات" data-en="Conversation History">سجل المحادثات</span> ({{ reports|length }})</div>
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>رقم المحادثة</th>
-                    <th>العميل</th>
-                    <th>التصنيف</th>
-                    <th>التاريخ</th>
-                    <th>الوقت</th>
-                    <th>وقت الحل</th>
-                    <th>الملخص</th>
+                    <th data-ar="رقم المحادثة" data-en="Conv. #">رقم المحادثة</th>
+                    <th data-ar="العميل" data-en="Customer">العميل</th>
+                    <th data-ar="التصنيف" data-en="Classification">التصنيف</th>
+                    <th data-ar="التاريخ" data-en="Date">التاريخ</th>
+                    <th data-ar="الوقت" data-en="Time">الوقت</th>
+                    <th data-ar="وقت الحل" data-en="Resolution Time">وقت الحل</th>
+                    <th data-ar="الملخص" data-en="Summary">الملخص</th>
                 </tr>
             </thead>
             <tbody>
@@ -135,7 +135,7 @@
                         <span class="badge badge-yellow">{{ r.classification }}</span>
                         {% endif %}
                     </td>
-                    <td>{{ r.resolved_date }}</td>
+                    <td>{% if r.resolved_date %}{% with d=r.resolved_date|stringformat:"s" %}{{ d|slice:":4" }}-{{ d|slice:"4:6" }}-{{ d|slice:"6:8" }}{% endwith %}{% endif %}</td>
                     <td>{{ r.resolved_time }}</td>
                     <td>
                         {% if r.resolution_minutes %}

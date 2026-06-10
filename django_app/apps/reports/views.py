@@ -5,11 +5,20 @@ from visitor_data import get_visitor_data
 import calendar
 from datetime import date
 
+ARABIC_MONTHS = {
+    1:'يناير',2:'فبراير',3:'مارس',4:'أبريل',5:'مايو',6:'يونيو',
+    7:'يوليو',8:'أغسطس',9:'سبتمبر',10:'أكتوبر',11:'نوفمبر',12:'ديسمبر'
+}
 
 @login_required
 def reports_list(request):
-    date_from    = request.GET.get('from', '')
-    date_to      = request.GET.get('to', '')
+    today = date.today()
+    default_from = today.replace(day=1).strftime('%Y-%m-%d')
+    last_day     = calendar.monthrange(today.year, today.month)[1]
+    default_to   = today.replace(day=last_day).strftime('%Y-%m-%d')
+    date_from    = request.GET.get('from', default_from)
+    date_to      = request.GET.get('to',   default_to)
+    month_label  = f"{ARABIC_MONTHS[today.month]} {today.year}" 
     agent_filter = request.GET.get('agent', '')
     class_filter = request.GET.get('classification', '')
     if get_role(request.user) == 'visitor':
@@ -28,6 +37,7 @@ def reports_list(request):
         agents = list(set(r['agent_name'] for r in vdata['reports']))
         return render(request, 'reports/list.html', {
             'data': data, 'agents': agents, 'is_manager': True,
+            'month_label': month_label,
             'filters': {'agent': agent_filter, 'from': date_from, 'to': date_to, 'classification': class_filter},
         })
     conn = get_connection()
@@ -45,7 +55,7 @@ def reports_list(request):
     if class_filter:
         where += f" AND classification LIKE N'%{class_filter}%'"
 
-    cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY created_at DESC")
+    cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC")
     data = cursor.fetchall()
 
     agents = []
@@ -56,6 +66,7 @@ def reports_list(request):
 
     return render(request, 'reports/list.html', {
         'data': data, 'agents': agents, 'is_manager': is_manager_level(request.user),
+        'month_label': month_label,
         'filters': {'agent': agent_filter, 'from': date_from, 'to': date_to, 'classification': class_filter},
     })
 
@@ -68,8 +79,25 @@ def monthly(request):
     years  = list(range(date.today().year - 2, date.today().year + 1))
 
     if get_role(request.user) == 'visitor':
+        vdata = get_visitor_data(request)
+        # حساب التقرير الشهري من بيانات الـ visitor
+        month_start = int(f"{year}{month:02d}01")
+        month_end   = int(f"{year}{month:02d}{calendar.monthrange(year, month)[1]}")
+        month_reports = [r for r in vdata['reports']
+                         if month_start <= r['resolved_date'] <= month_end]
+        agents_seen = {}
+        for r in month_reports:
+            a = r['agent_name']
+            if a not in agents_seen:
+                agents_seen[a] = {'agent_name': a, 'total': 0, 'resolved': 0, 'unresolved': 0}
+            agents_seen[a]['total'] += 1
+            if r['classification'].startswith('تم حل'):
+                agents_seen[a]['resolved'] += 1
+            else:
+                agents_seen[a]['unresolved'] += 1
+        visitor_monthly = sorted(agents_seen.values(), key=lambda x: x['total'], reverse=True)
         return render(request, 'reports/monthly.html', {
-            'data': FAKE_MONTHLY, 'months': months, 'years': years,
+            'data': visitor_monthly, 'months': months, 'years': years,
             'selected_month': month, 'selected_year': year, 'is_manager': True,
         })
 

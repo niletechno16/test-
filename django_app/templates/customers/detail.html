@@ -64,24 +64,24 @@
     {% if customer.avg_resolution_minutes %}
     <div style="text-align:center">
         <div style="font-size:22px;font-weight:800;color:var(--blue)">{{ customer.avg_resolution_minutes }}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">متوسط وقت الحل (د)</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px" data-ar="متوسط وقت الحل (د)" data-en="Avg. Resolution (min)">متوسط وقت الحل (د)</div>
     </div>
     {% endif %}
 </div>
 
 <div class="card">
-    <div class="section-title">سجل المحادثات ({{ reports|length }})</div>
+    <div class="section-title"><span data-ar="سجل المحادثات" data-en="Conversation History">سجل المحادثات</span> ({{ reports|length }})</div>
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>رقم المحادثة</th>
-                    <th>الأيجنت</th>
-                    <th>التصنيف</th>
-                    <th>التاريخ</th>
-                    <th>الوقت</th>
-                    <th>وقت الحل</th>
-                    <th>الملخص</th>
+                    <th data-ar="رقم المحادثة" data-en="Conv. #">رقم المحادثة</th>
+                    <th data-ar="الأيجنت" data-en="Agent">الأيجنت</th>
+                    <th data-ar="التصنيف" data-en="Classification">التصنيف</th>
+                    <th data-ar="التاريخ" data-en="Date">التاريخ</th>
+                    <th data-ar="الوقت" data-en="Time">الوقت</th>
+                    <th data-ar="وقت الحل" data-en="Resolution Time">وقت الحل</th>
+                    <th data-ar="الملخص" data-en="Summary">الملخص</th>
                 </tr>
             </thead>
             <tbody>
@@ -98,7 +98,7 @@
                         <span class="badge badge-yellow">{{ r.classification }}</span>
                         {% endif %}
                     </td>
-                    <td>{{ r.resolved_date }}</td>
+                    <td>{% if r.resolved_date %}{% with d=r.resolved_date|stringformat:"s" %}{{ d|slice:":4" }}-{{ d|slice:"4:6" }}-{{ d|slice:"6:8" }}{% endwith %}{% endif %}</td>
                     <td>{{ r.resolved_time }}</td>
                     <td>
                         {% if r.resolution_minutes %}

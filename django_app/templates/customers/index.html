@@ -85,6 +85,7 @@
 
 {% block content %}
 <div class="page-title"><i class="fa-solid fa-users"></i> العملاء</div>
+<div class="month-banner"><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لشهر" data-en="Showing data for">البيانات المعروضة لشهر</span> <strong>{{ month_label }}</strong></div>
 
 <form method="get">
     <div class="filters-bar">
@@ -126,7 +127,7 @@
         </div>
         {% if c.avg_resolution_minutes %}
         <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:11px;color:var(--muted)">متوسط وقت الحل</span>
+            <span style="font-size:11px;color:var(--muted)" data-ar="متوسط وقت الحل" data-en="Avg. Resolution">متوسط وقت الحل</span>
             <span style="font-size:14px;font-weight:800;color:var(--blue)">{{ c.avg_resolution_minutes }} د</span>
         </div>
         {% endif %}

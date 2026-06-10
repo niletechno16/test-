@@ -9,6 +9,7 @@
 
 {% block content %}
 <div class="page-title"><i class="fa-solid fa-file-lines"></i> التقارير</div>
+<div class="month-banner"><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لشهر" data-en="Showing data for">البيانات المعروضة لشهر</span> <strong>{{ month_label }}</strong></div>
 
 <!-- Filters -->
 <form method="get">
@@ -28,7 +29,7 @@
     <input type="hidden" name="to"   value="{{ date_to }}">
     <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> فلتر</button>
     <a href="{% url 'reports_list' %}" class="btn btn-ghost"><i class="fa-solid fa-xmark"></i> مسح</a>
-    <a href="{% url 'monthly' %}" class="btn btn-ghost" style="margin-right:auto">
+    <a href="{% url 'monthly' %}" class="btn btn-ghost" style="margin-right:auto; background:rgba(79,110,247,.12); border-color:var(--accent); color:var(--accent)">
       <i class="fa-solid fa-calendar-days"></i> تقرير شهري
     </a>
   </div>
@@ -40,15 +41,15 @@
     <table>
       <thead>
         <tr>
-          <th>المحادثة</th>
-          <th>العميل</th>
-          <th>الهاتف</th>
-          <th>الأيجنت</th>
-          <th>التصنيف</th>
-          <th>التاريخ</th>
-          <th>الوقت</th>
-          <th>وقت الحل</th>
-          <th>الملخص</th>
+          <th data-ar="المحادثة" data-en="Conv.">المحادثة</th>
+          <th data-ar="العميل" data-en="Customer">العميل</th>
+          <th data-ar="الهاتف" data-en="Phone">الهاتف</th>
+          <th data-ar="الأيجنت" data-en="Agent">الأيجنت</th>
+          <th data-ar="التصنيف" data-en="Classification">التصنيف</th>
+          <th data-ar="التاريخ" data-en="Date">التاريخ</th>
+          <th data-ar="الوقت" data-en="Time">الوقت</th>
+          <th data-ar="وقت الحل" data-en="Resolution Time">وقت الحل</th>
+          <th data-ar="الملخص" data-en="Summary">الملخص</th>
         </tr>
       </thead>
       <tbody>
@@ -67,7 +68,7 @@
               <span class="badge badge-yellow">{{ r.classification }}</span>
             {% endif %}
           </td>
-          <td>{{ r.resolved_date }}</td>
+          <td>{% if r.resolved_date %}{% with d=r.resolved_date|stringformat:"s" %}{{ d|slice:":4" }}-{{ d|slice:"4:6" }}-{{ d|slice:"6:8" }}{% endwith %}{% endif %}</td>
           <td>{{ r.resolved_time }}</td>
           <td>
             {% if r.resolution_minutes %}

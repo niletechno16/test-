@@ -106,6 +106,7 @@
 
 {% block content %}
 <div class="page-title"><i class="fa-solid fa-house"></i> لوحة التحكم</div>
+<div class="month-banner"><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لشهر" data-en="Showing data for">البيانات المعروضة لشهر</span> <strong>{{ month_label }}</strong></div>
 
 <!-- Stats -->
 <div class="stats-grid">
@@ -114,7 +115,7 @@
             <i class="fa-solid fa-comments"></i>
         </div>
         <div>
-            <div class="label">إجمالي المحادثات</div>
+            <div class="label" data-ar="إجمالي المحادثات" data-en="Total Conversations">إجمالي المحادثات</div>
             <div class="value">{{ total_reports }}</div>
         </div>
     </div>
@@ -123,7 +124,7 @@
             <i class="fa-solid fa-circle-check"></i>
         </div>
         <div>
-            <div class="label">تم الحل</div>
+            <div class="label" data-ar="تم الحل" data-en="Resolved">تم الحل</div>
             <div class="value" style="color:var(--green)">{{ total_resolved }}</div>
         </div>
     </div>
@@ -132,7 +133,7 @@
             <i class="fa-solid fa-circle-xmark"></i>
         </div>
         <div>
-            <div class="label">لم يتم الحل</div>
+            <div class="label" data-ar="لم يتم الحل" data-en="Unresolved">لم يتم الحل</div>
             <div class="value" style="color:var(--red)">{{ total_unresolved }}</div>
         </div>
     </div>
@@ -141,8 +142,17 @@
             <i class="fa-solid fa-users"></i>
         </div>
         <div>
-            <div class="label">إجمالي العملاء</div>
+            <div class="label" data-ar="إجمالي العملاء" data-en="Total Customers">إجمالي العملاء</div>
             <div class="value" style="color:var(--yellow)">{{ total_customers }}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="icon" style="background:rgba(139,91,235,.15);color:#a78bfa">
+            <i class="fa-solid fa-stopwatch"></i>
+        </div>
+        <div>
+            <div class="label" data-ar="متوسط وقت الحل (د)" data-en="Avg. Resolution (min)">متوسط وقت الحل (د)</div>
+            <div class="value" style="color:#a78bfa">{{ avg_resolution_overall }}</div>
         </div>
     </div>
 </div>
@@ -152,7 +162,7 @@
 
     <!-- أكتر أيجنت حل -->
     <div class="chart-card">
-        <div class="section-title">أكثر أيجنت حل مشاكل</div>
+        <div class="section-title" data-ar="أكثر أيجنت حل مشاكل" data-en="Top Resolving Agents">أكثر أيجنت حل مشاكل</div>
         <canvas id="agentsChart"></canvas>
     </div>
 
@@ -172,14 +182,14 @@
                     <div class="pie-legend-dot" style="background:var(--green)"></div>
                     <div>
                         <div style="font-weight:700;font-size:18px;color:var(--green)">{{ resolved_pct }}%</div>
-                        <div style="font-size:12px;color:var(--muted)">تم الحل</div>
+                        <div style="font-size:12px;color:var(--muted)" data-ar="تم الحل" data-en="Resolved">تم الحل</div>
                     </div>
                 </div>
                 <div class="pie-legend-item">
                     <div class="pie-legend-dot" style="background:var(--red)"></div>
                     <div>
                         <div style="font-weight:700;font-size:18px;color:var(--red)">{{ unresolved_pct }}%</div>
-                        <div style="font-size:12px;color:var(--muted)">لم يتم الحل</div>
+                        <div style="font-size:12px;color:var(--muted)" data-ar="لم يتم الحل" data-en="Unresolved">لم يتم الحل</div>
                     </div>
                 </div>
                 <div class="pie-legend-item">
@@ -216,13 +226,13 @@
 
     <!-- متوسط وقت الحل للعملاء -->
     <div class="chart-card">
-        <div class="section-title">متوسط وقت الحل لكل عميل (دقيقة)</div>
-        <canvas id="customerAvgChart"></canvas>
+        <div class="section-title" data-ar="متوسط وقت الحل لكل أيجنت (دقيقة)" data-en="Avg. Resolution Time per Agent (min)">متوسط وقت الحل لكل أيجنت (دقيقة)</div>
+        <canvas id="agentAvgChart"></canvas>
     </div>
 
     <!-- ترافيك الرسائل -->
     <div class="chart-card">
-        <div class="section-title">ترافيك الرسائل عبر الوقت</div>
+        <div class="section-title" data-ar="ترافيك الرسائل عبر الوقت" data-en="Message Traffic Over Time">ترافيك الرسائل عبر الوقت</div>
         <canvas id="trafficChart"></canvas>
     </div>
 
@@ -322,14 +332,14 @@
         plugins: { legend: { display: false } }
     }
 });
-    // Customer Avg Resolution Bar
-    new Chart(document.getElementById('customerAvgChart'), {
+    // Agent Avg Resolution Bar
+    new Chart(document.getElementById('agentAvgChart'), {
         type: 'bar',
         data: {
-            labels: [{% for c in avg_resolution_by_customer %}"{{ c.name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+            labels: [{% for a in avg_resolution_by_agent %}"{{ a.name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
             datasets: [{
                 label: 'متوسط وقت الحل (د)',
-                data: [{% for c in avg_resolution_by_customer %}{{ c.avg }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                data: [{% for a in avg_resolution_by_agent %}{{ a.avg }}{% if not forloop.last %}, {% endif %}{% endfor %}],
                 backgroundColor: 'rgba(245,158,11,0.7)',
                 borderRadius: 8,
                 borderSkipped: false,
