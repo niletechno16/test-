@@ -5,7 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Nile Techno Reports{% endblock %}</title>
+    <title>Nile Techno | {% block title %}Reports{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'images/NTLogo3.png' %}">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -256,42 +257,7 @@
             gap: 10px;
         }
 
-        /* Date Filter */
-        .date-filter {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: var(--surface);
-            border: 1px solid var(--border2);
-            border-radius: 8px;
-            padding: 5px 10px;
-        }
 
-        .date-filter label {
-            font-size: 11px;
-            color: var(--muted);
-            font-weight: 600;
-        }
-
-        .date-filter input {
-            padding: 4px 7px;
-            border: 1px solid var(--border2);
-            border-radius: 6px;
-            background: var(--surface2);
-            color: var(--text);
-            font-family: 'Cairo', sans-serif;
-            font-size: 11px;
-            outline: none;
-            color-scheme: dark;
-        }
-
-        body.light-mode .date-filter input {
-            color-scheme: light;
-        }
-
-        .date-filter input:focus {
-            border-color: var(--blue);
-        }
 
         .btn-filter {
             padding: 5px 10px;
@@ -496,9 +462,64 @@
         .main {
             margin-right: var(--sidebar-w);
             margin-left: 0;
-            margin-top: var(--navbar-h);
+            margin-top: calc(var(--navbar-h) + var(--subbar-h, 48px));
             padding: 24px;
             min-height: calc(100vh - var(--navbar-h));
+        }
+
+        /* ===== SUBBAR — شريط الفلتر الثابت تحت الـ navbar ===== */
+        :root {
+            --subbar-h: 48px;
+        }
+
+        .subbar {
+            position: fixed;
+            top: var(--navbar-h);
+            left: 0;
+            right: var(--sidebar-w);
+            height: var(--subbar-h);
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            z-index: 140;
+            gap: 8px;
+            transition: background 0.25s, border-color 0.25s;
+        }
+
+        .subbar form {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+
+        .subbar label {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .subbar input[type="date"] {
+            padding: 4px 7px;
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            background: var(--surface2);
+            color: var(--text);
+            font-family: 'Cairo', sans-serif;
+            font-size: 11px;
+            outline: none;
+            color-scheme: dark;
+        }
+
+        body.light-mode .subbar input[type="date"] {
+            color-scheme: light;
+        }
+
+        .subbar input[type="date"]:focus {
+            border-color: var(--blue);
         }
 
         /* ===== PAGE TITLE ===== */
@@ -870,6 +891,30 @@
             gap: 10px;
             align-items: center;
             margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .month-year-picker {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .month-year-picker select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border2);
+            background: var(--surface2);
+            color: var(--text);
+            font-family: 'Cairo', sans-serif;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.18s;
+        }
+
+        .month-year-picker select:focus {
+            border-color: var(--blue);
         }
 
         .search-bar {
@@ -1043,18 +1088,8 @@
                 padding: 0 16px;
             }
 
-            .date-filter {
-                gap: 4px;
-                padding: 4px 8px;
-            }
-
-            .date-filter input {
-                font-size: 10px;
-                padding: 3px 5px;
-            }
-
-            .date-filter label {
-                display: none;
+            .subbar {
+                padding: 0 16px;
             }
 
             .charts-grid {
@@ -1123,16 +1158,25 @@
                 padding: 12px;
             }
 
+            /* الـ subbar يمتد لكامل العرض على الموبايل */
+            .subbar {
+                right: 0;
+                padding: 0 12px;
+                gap: 6px;
+            }
+
+            .subbar input[type="date"] {
+                font-size: 10px;
+                padding: 4px 5px;
+                max-width: 120px;
+            }
+
+            .subbar label {
+                display: none;
+            }
+
             /* إخفاء عناصر الـ navbar الأقل أهمية على الموبايل */
             .bell-btn {
-                display: none;
-            }
-
-            .lang-btn {
-                display: none;
-            }
-
-            .date-filter {
                 display: none;
             }
 
@@ -1178,12 +1222,30 @@
             }
 
             /* Table overflow */
-            .table-card {
+            .table-card,
+            .table-wrap {
                 overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
             }
 
             table {
-                min-width: 600px;
+                min-width: 520px;
+            }
+
+            /* Filters-bar vertical on mobile */
+            .filters-bar {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .filters-bar .select-input,
+            .filters-bar .search-input {
+                flex: 1 1 140px;
+                min-width: 0;
+            }
+
+            .filters-bar .btn {
+                flex-shrink: 0;
             }
 
             /* Page title أصغر */
@@ -1301,24 +1363,6 @@
         </div>
 
         <div class="navbar-right">
-            <form method="get" class="date-filter" id="dateFilterForm">
-                <label data-ar="من" data-en="From">من</label>
-                <input type="date" name="from" value="{{ request.GET.from }}">
-                <label data-ar="إلى" data-en="To">إلى</label>
-                <input type="date" name="to" value="{{ request.GET.to }}">
-                <button type="submit" class="btn-filter">
-                    <i class="fa-solid fa-filter"></i>
-                    <span data-ar="تصفية" data-en="Filter">تصفية</span>
-                </button>
-                {% if request.GET.search %}<input type="hidden" name="search" value="{{ request.GET.search }}">
-                {% endif%}
-                {% if request.GET.agent %}<input type="hidden" name="agent" value="{{ request.GET.agent }}">{% endif %}
-                {% if request.GET.classification %}<input type="hidden" name="classification"
-                    value="{{ request.GET.classification }}">{% endif %}
-                {% if request.GET.month %}<input type="hidden" name="month" value="{{ request.GET.month }}">{% endif %}
-                {% if request.GET.year %}<input type="hidden" name="year" value="{{ request.GET.year }}">{% endif %}
-            </form>
-
             <button class="lang-btn" onclick="toggleLang()">
                 <i class="fa-solid fa-globe"></i>
                 <span id="langLabel">EN</span>
@@ -1357,6 +1401,25 @@
             </div>
         </div>
     </nav>
+
+    <!-- ===== SUBBAR — شريط الفلتر الثابت تحت الـ navbar ===== -->
+    <div class="subbar">
+        <form method="get" id="dateFilterForm" style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">
+            <label data-ar="من" data-en="From">من</label>
+            <input type="date" name="from" value="{{ request.GET.from }}">
+            <label data-ar="إلى" data-en="To">إلى</label>
+            <input type="date" name="to" value="{{ request.GET.to }}">
+            <button type="submit" class="btn-filter">
+                <i class="fa-solid fa-filter"></i>
+                <span data-ar="تصفية" data-en="Filter">تصفية</span>
+            </button>
+            {% if request.GET.search %}<input type="hidden" name="search" value="{{ request.GET.search }}">{% endif %}
+            {% if request.GET.agent %}<input type="hidden" name="agent" value="{{ request.GET.agent }}">{% endif %}
+            {% if request.GET.classification %}<input type="hidden" name="classification" value="{{ request.GET.classification }}">{% endif %}
+            {% if request.GET.month %}<input type="hidden" name="month" value="{{ request.GET.month }}">{% endif %}
+            {% if request.GET.year %}<input type="hidden" name="year" value="{{ request.GET.year }}">{% endif %}
+        </form>
+    </div>
 
     <!-- ===== MAIN ===== -->
     <main class="main">

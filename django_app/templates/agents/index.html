@@ -96,23 +96,50 @@
 
 {% block content %}
 <div class="page-title"><i class="fa-solid fa-headset"></i> الأيجنت</div>
-<div class="month-banner"><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لشهر" data-en="Showing data for">البيانات المعروضة لشهر</span> <strong>{{ month_label }}</strong></div>
+<div class="month-banner"><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لـ" data-en="Showing data for">البيانات المعروضة لـ</span> <strong>{{ month_label }}</strong></div>
 
 <!-- Filters -->
 <form method="get">
     <div class="filters-bar">
         <input class="search-input" type="text" name="search" placeholder="ابحث عن أيجنت..." value="{{ search }}">
-        <input type="hidden" name="from" value="{{ date_from }}">
-        <input type="hidden" name="to" value="{{ date_to }}">
-        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> بحث</button>
-        {% if search %}
-        <a href="{% url 'agents_list' %}{% if date_from %}?from={{ date_from }}&to={{ date_to }}{% endif %}"
-            class="btn btn-ghost">
-            <i class="fa-solid fa-xmark"></i> مسح
-        </a>
-        {% endif %}
+        <div class="month-year-picker">
+          <select name="month" id="monthPicker" onchange="applyMonthYear()">
+            <option value="1"  {% if selected_month == 1  %}selected{% endif %}>يناير</option>
+            <option value="2"  {% if selected_month == 2  %}selected{% endif %}>فبراير</option>
+            <option value="3"  {% if selected_month == 3  %}selected{% endif %}>مارس</option>
+            <option value="4"  {% if selected_month == 4  %}selected{% endif %}>أبريل</option>
+            <option value="5"  {% if selected_month == 5  %}selected{% endif %}>مايو</option>
+            <option value="6"  {% if selected_month == 6  %}selected{% endif %}>يونيو</option>
+            <option value="7"  {% if selected_month == 7  %}selected{% endif %}>يوليو</option>
+            <option value="8"  {% if selected_month == 8  %}selected{% endif %}>أغسطس</option>
+            <option value="9"  {% if selected_month == 9  %}selected{% endif %}>سبتمبر</option>
+            <option value="10" {% if selected_month == 10 %}selected{% endif %}>أكتوبر</option>
+            <option value="11" {% if selected_month == 11 %}selected{% endif %}>نوفمبر</option>
+            <option value="12" {% if selected_month == 12 %}selected{% endif %}>ديسمبر</option>
+          </select>
+          <select name="year" id="yearPicker" onchange="applyMonthYear()">
+            {% for y in available_years %}
+            <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <input type="hidden" name="from" id="dateFrom" value="{{ date_from }}">
+        <input type="hidden" name="to"   id="dateTo"   value="{{ date_to }}">
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> فلتر</button>
+        <a href="{% url 'agents_list' %}" class="btn btn-ghost"><i class="fa-solid fa-xmark"></i> مسح</a>
     </div>
 </form>
+
+<script>
+function applyMonthYear() {
+  const month = parseInt(document.getElementById('monthPicker').value);
+  const year  = parseInt(document.getElementById('yearPicker').value);
+  const lastDay = new Date(year, month, 0).getDate();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('dateFrom').value = `${year}-${pad(month)}-01`;
+  document.getElementById('dateTo').value   = `${year}-${pad(month)}-${pad(lastDay)}`;
+}
+</script>
 
 <!-- Cards -->
 {% if agents %}

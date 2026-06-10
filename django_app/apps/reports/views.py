@@ -18,9 +18,22 @@ def reports_list(request):
     default_to   = today.replace(day=last_day).strftime('%Y-%m-%d')
     date_from    = request.GET.get('from', default_from)
     date_to      = request.GET.get('to',   default_to)
-    month_label  = f"{ARABIC_MONTHS[today.month]} {today.year}" 
+
+    # derive selected month/year from date_from for the picker
+    try:
+        from_parts     = date_from.split('-')
+        selected_year  = int(from_parts[0])
+        selected_month = int(from_parts[1])
+    except Exception:
+        selected_year  = today.year
+        selected_month = today.month
+
+    month_label     = f"{ARABIC_MONTHS[selected_month]} {selected_year}"
+    available_years = list(range(today.year - 3, today.year + 1))
+
     agent_filter = request.GET.get('agent', '')
     class_filter = request.GET.get('classification', '')
+
     if get_role(request.user) == 'visitor':
         vdata = get_visitor_data(request)
         data = vdata['reports']
@@ -34,12 +47,16 @@ def reports_list(request):
             data = [r for r in data if r['agent_name'] == agent_filter]
         if class_filter:
             data = [r for r in data if class_filter in r['classification']]
+        data = sorted(data, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
         agents = list(set(r['agent_name'] for r in vdata['reports']))
         return render(request, 'reports/list.html', {
             'data': data, 'agents': agents, 'is_manager': True,
             'month_label': month_label,
+            'selected_month': selected_month, 'selected_year': selected_year,
+            'available_years': available_years,
             'filters': {'agent': agent_filter, 'from': date_from, 'to': date_to, 'classification': class_filter},
         })
+
     conn = get_connection()
     cursor = conn.cursor(as_dict=True)
 
@@ -55,7 +72,7 @@ def reports_list(request):
     if class_filter:
         where += f" AND classification LIKE N'%{class_filter}%'"
 
-    cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC")
+    cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC, resolved_time DESC")
     data = cursor.fetchall()
 
     agents = []
@@ -67,6 +84,8 @@ def reports_list(request):
     return render(request, 'reports/list.html', {
         'data': data, 'agents': agents, 'is_manager': is_manager_level(request.user),
         'month_label': month_label,
+        'selected_month': selected_month, 'selected_year': selected_year,
+        'available_years': available_years,
         'filters': {'agent': agent_filter, 'from': date_from, 'to': date_to, 'classification': class_filter},
     })
 
@@ -80,7 +99,6 @@ def monthly(request):
 
     if get_role(request.user) == 'visitor':
         vdata = get_visitor_data(request)
-        # حساب التقرير الشهري من بيانات الـ visitor
         month_start = int(f"{year}{month:02d}01")
         month_end   = int(f"{year}{month:02d}{calendar.monthrange(year, month)[1]}")
         month_reports = [r for r in vdata['reports']
@@ -126,5 +144,3 @@ def monthly(request):
         'selected_month': month, 'selected_year': year,
         'is_manager': is_manager_level(request.user),
     })
-
-    

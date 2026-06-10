@@ -10,6 +10,18 @@ ARABIC_MONTHS = {
     7:'يوليو',8:'أغسطس',9:'سبتمبر',10:'أكتوبر',11:'نوفمبر',12:'ديسمبر'
 }
 
+def _month_year_context(date_from, today):
+    try:
+        parts = date_from.split('-')
+        sel_year  = int(parts[0])
+        sel_month = int(parts[1])
+    except Exception:
+        sel_year  = today.year
+        sel_month = today.month
+    month_label     = f"{ARABIC_MONTHS[sel_month]} {sel_year}"
+    available_years = list(range(today.year - 3, today.year + 1))
+    return sel_month, sel_year, month_label, available_years
+
 @login_required
 def agents_list(request):
     today = date.today()
@@ -19,7 +31,7 @@ def agents_list(request):
     date_from = request.GET.get('from', default_from)
     date_to   = request.GET.get('to',   default_to)
     search    = request.GET.get('search', '')
-    month_label = f"{ARABIC_MONTHS[today.month]} {today.year}" 
+    sel_month, sel_year, month_label, available_years = _month_year_context(date_from, today)
 
     if get_role(request.user) == 'visitor':
         vdata = get_visitor_data(request)
@@ -30,6 +42,8 @@ def agents_list(request):
             'agents': agents, 'is_manager': True,
             'search': search, 'date_from': date_from, 'date_to': date_to,
             'month_label': month_label,
+            'selected_month': sel_month, 'selected_year': sel_year,
+            'available_years': available_years,
         })
     conn = get_connection()
     cursor = conn.cursor(as_dict=True)
@@ -58,6 +72,8 @@ def agents_list(request):
         'agents': agents, 'is_manager': is_manager_level(request.user),
         'search': search, 'date_from': date_from, 'date_to': date_to,
         'month_label': month_label,
+        'selected_month': sel_month, 'selected_year': sel_year,
+        'available_years': available_years,
     })
 
 
@@ -69,6 +85,7 @@ def agent_detail(request, agent_id):
     default_to   = today.replace(day=last_day).strftime('%Y-%m-%d')
     date_from = request.GET.get('from', default_from)
     date_to   = request.GET.get('to',   default_to)
+    sel_month, sel_year, month_label, available_years = _month_year_context(date_from, today)
 
     if get_role(request.user) == 'visitor':
         vdata = get_visitor_data(request)
@@ -80,9 +97,13 @@ def agent_detail(request, agent_id):
         if date_to:
             date_to_int = int(date_to.replace('-', ''))
             agent_reports = [r for r in agent_reports if r['resolved_date'] <= date_to_int]
+        agent_reports = sorted(agent_reports, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
         return render(request, 'agents/detail.html', {
             'agent': agent, 'reports': agent_reports,
             'is_manager': True, 'date_from': date_from, 'date_to': date_to,
+            'month_label': month_label,
+            'selected_month': sel_month, 'selected_year': sel_year,
+            'available_years': available_years,
         })
 
     conn = get_connection()
@@ -94,10 +115,10 @@ def agent_detail(request, agent_id):
     if date_to:
         where += f" AND resolved_date <= {date_to.replace('-', '')}"
 
-    cursor.execute(f"SELECT TOP 1 agent_name FROM Customer_service_reports_by_A WHERE agent_id = {agent_id}")
+    cursor.execute(f"SELECT TOP 1 agent_id, agent_name FROM Customer_service_reports_by_A WHERE agent_id = {agent_id}")
     agent = cursor.fetchone()
 
-    cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY created_at DESC")
+    cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC, resolved_time DESC")
     reports = cursor.fetchall()
     conn.close()
 
@@ -105,4 +126,7 @@ def agent_detail(request, agent_id):
         'agent': agent, 'reports': reports,
         'is_manager': is_manager_level(request.user),
         'date_from': date_from, 'date_to': date_to,
+        'month_label': month_label,
+        'selected_month': sel_month, 'selected_year': sel_year,
+        'available_years': available_years,
     })

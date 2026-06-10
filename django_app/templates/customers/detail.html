@@ -12,37 +12,24 @@
         align-items: center;
         gap: 20px;
         margin-bottom: 24px;
+        flex-wrap: wrap;
     }
-
     .customer-header .big-avatar {
-        width: 64px;
-        height: 64px;
-        border-radius: 16px;
+        width: 64px; height: 64px; border-radius: 16px;
         background: linear-gradient(135deg, var(--yellow), #f97316);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 26px;
-        font-weight: 800;
-        flex-shrink: 0;
-        color: #000;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 26px; font-weight: 800; flex-shrink: 0; color: #000;
     }
-
-    .customer-header .info .name {
-        font-size: 20px;
-        font-weight: 800;
+    .customer-header .info .name  { font-size: 20px; font-weight: 800; }
+    .customer-header .info .phone { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .customer-header .info .id    { color: var(--muted); font-size: 12px; }
+    .month-year-picker { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .month-year-picker select {
+        padding:7px 12px; border-radius:8px; border:1px solid var(--border2);
+        background:var(--surface2); color:var(--text); font-family:'Cairo',sans-serif;
+        font-size:13px; outline:none; cursor:pointer;
     }
-
-    .customer-header .info .phone {
-        color: var(--muted);
-        font-size: 13px;
-        margin-top: 4px;
-    }
-
-    .customer-header .info .id {
-        color: var(--muted);
-        font-size: 12px;
-    }
+    .month-year-picker select:focus { border-color:var(--blue); }
 </style>
 {% endblock %}
 
@@ -51,6 +38,12 @@
     <a href="{% url 'customers_list' %}" class="btn btn-ghost">
         <i class="fa-solid fa-arrow-right"></i> رجوع
     </a>
+</div>
+
+<div class="month-banner">
+  <i class="fa-solid fa-calendar-check"></i>
+  <span data-ar="البيانات المعروضة لـ" data-en="Showing data for">البيانات المعروضة لـ</span>
+  <strong>{{ month_label }}</strong>
 </div>
 
 <div class="customer-header">
@@ -68,6 +61,37 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Month/Year Filter -->
+<form method="get" style="margin-bottom:16px">
+  <div class="filters-bar">
+    <div class="month-year-picker">
+      <select name="month" id="monthPicker" onchange="applyMonthYear()">
+        <option value="1"  {% if selected_month == 1  %}selected{% endif %}>يناير</option>
+        <option value="2"  {% if selected_month == 2  %}selected{% endif %}>فبراير</option>
+        <option value="3"  {% if selected_month == 3  %}selected{% endif %}>مارس</option>
+        <option value="4"  {% if selected_month == 4  %}selected{% endif %}>أبريل</option>
+        <option value="5"  {% if selected_month == 5  %}selected{% endif %}>مايو</option>
+        <option value="6"  {% if selected_month == 6  %}selected{% endif %}>يونيو</option>
+        <option value="7"  {% if selected_month == 7  %}selected{% endif %}>يوليو</option>
+        <option value="8"  {% if selected_month == 8  %}selected{% endif %}>أغسطس</option>
+        <option value="9"  {% if selected_month == 9  %}selected{% endif %}>سبتمبر</option>
+        <option value="10" {% if selected_month == 10 %}selected{% endif %}>أكتوبر</option>
+        <option value="11" {% if selected_month == 11 %}selected{% endif %}>نوفمبر</option>
+        <option value="12" {% if selected_month == 12 %}selected{% endif %}>ديسمبر</option>
+      </select>
+      <select name="year" id="yearPicker" onchange="applyMonthYear()">
+        {% for y in available_years %}
+        <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <input type="hidden" name="from" id="dateFrom" value="{{ date_from }}">
+    <input type="hidden" name="to"   id="dateTo"   value="{{ date_to }}">
+    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> فلتر</button>
+    <a href="{% url 'customer_detail' customer.customer_id %}" class="btn btn-ghost"><i class="fa-solid fa-xmark"></i> مسح</a>
+  </div>
+</form>
 
 <div class="card">
     <div class="section-title"><span data-ar="سجل المحادثات" data-en="Conversation History">سجل المحادثات</span> ({{ reports|length }})</div>
@@ -111,11 +135,22 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" style="text-align:center;color:var(--muted);padding:30px">لا توجد محادثات</td>
+                    <td colspan="7" style="text-align:center;color:var(--muted);padding:30px">لا توجد محادثات</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+<script>
+function applyMonthYear() {
+  const month = parseInt(document.getElementById('monthPicker').value);
+  const year  = parseInt(document.getElementById('yearPicker').value);
+  const lastDay = new Date(year, month, 0).getDate();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('dateFrom').value = `${year}-${pad(month)}-01`;
+  document.getElementById('dateTo').value   = `${year}-${pad(month)}-${pad(lastDay)}`;
+}
+</script>
 {% endblock %}

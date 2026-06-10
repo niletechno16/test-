@@ -106,7 +106,7 @@
 
 {% block content %}
 <div class="page-title"><i class="fa-solid fa-house"></i> لوحة التحكم</div>
-<div class="month-banner"><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لشهر" data-en="Showing data for">البيانات المعروضة لشهر</span> <strong>{{ month_label }}</strong></div>
+<div class="month-banner"><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لـ" data-en="Showing data for">البيانات المعروضة لـ</span> <strong>{{ month_label }}</strong></div>
 
 <!-- Stats -->
 <div class="stats-grid">
@@ -168,13 +168,13 @@
 
     <!-- أكتر عميل تواصل -->
     <div class="chart-card">
-        <div class="section-title">أكثر العملاء تواصلاً</div>
+        <div class="section-title" data-ar="أكثر العملاء تواصلاً" data-en="Top Contacting Customers">أكثر العملاء تواصلاً</div>
         <canvas id="customersChart"></canvas>
     </div>
 
     <!-- نسبة الحل -->
     <div class="chart-card">
-        <div class="section-title">نسبة الحل</div>
+        <div class="section-title" data-ar="نسبة الحل" data-en="Resolution Rate">نسبة الحل</div>
         <div class="pie-wrap">
             <canvas id="pieChart"></canvas>
             <div class="pie-legend">
@@ -196,7 +196,7 @@
                     <div class="pie-legend-dot" style="background:var(--yellow)"></div>
                     <div>
                         <div style="font-weight:700;font-size:18px;color:var(--yellow)">{{ total_reports }}</div>
-                        <div style="font-size:12px;color:var(--muted)">إجمالي</div>
+                        <div style="font-size:12px;color:var(--muted)" data-ar="إجمالي" data-en="Total">إجمالي</div>
                     </div>
                 </div>
             </div>
@@ -205,7 +205,7 @@
 
     <!-- أكتر مشكلة اتكررت -->
     <div class="chart-card">
-        <div class="section-title">أكثر المشاكل تكراراً</div>
+        <div class="section-title" data-ar="أكثر المشاكل تكراراً" data-en="Most Common Issues">أكثر المشاكل تكراراً</div>
         <ul class="problems-list">
             {% for p in common_problems %}
             <li>

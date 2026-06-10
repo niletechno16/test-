@@ -10,6 +10,18 @@ ARABIC_MONTHS = {
     7:'يوليو',8:'أغسطس',9:'سبتمبر',10:'أكتوبر',11:'نوفمبر',12:'ديسمبر'
 }
 
+def _month_year_context(date_from, today):
+    try:
+        parts = date_from.split('-')
+        sel_year  = int(parts[0])
+        sel_month = int(parts[1])
+    except Exception:
+        sel_year  = today.year
+        sel_month = today.month
+    month_label     = f"{ARABIC_MONTHS[sel_month]} {sel_year}"
+    available_years = list(range(today.year - 3, today.year + 1))
+    return sel_month, sel_year, month_label, available_years
+
 @login_required
 def customers_list(request):
     today = date.today()
@@ -19,11 +31,10 @@ def customers_list(request):
     date_from = request.GET.get('from', default_from)
     date_to   = request.GET.get('to',   default_to)
     search    = request.GET.get('search', '')
-    month_label = f"{ARABIC_MONTHS[today.month]} {today.year}" 
+    sel_month, sel_year, month_label, available_years = _month_year_context(date_from, today)
+
     if get_role(request.user) != 'visitor' and not is_manager_level(request.user):
         return redirect('home')
-
-    search = request.GET.get('search', '')
 
     if get_role(request.user) == 'visitor':
         vdata = get_visitor_data(request)
@@ -32,17 +43,14 @@ def customers_list(request):
             customers = [c for c in customers if search in c['customer_name'] or search in c['customer_phone']]
         return render(request, 'customers/index.html', {
             'customers': customers, 'search': search, 'is_manager': True,
-            'date_from': date_from, 'date_to': date_to, 'month_label': month_label,
+            'date_from': date_from, 'date_to': date_to,
+            'month_label': month_label,
+            'selected_month': sel_month, 'selected_year': sel_year,
+            'available_years': available_years,
         })
 
     conn = get_connection()
     cursor = conn.cursor(as_dict=True)
-
-    where_r = "WHERE 1=1"
-    if date_from:
-        where_r += f" AND r.resolved_date >= {date_from.replace('-', '')}"
-    if date_to:
-        where_r += f" AND r.resolved_date <= {date_to.replace('-', '')}"
 
     search_clause = ""
     if search:
@@ -67,7 +75,10 @@ def customers_list(request):
 
     return render(request, 'customers/index.html', {
         'customers': customers, 'search': search, 'is_manager': True,
-        'date_from': date_from, 'date_to': date_to, 'month_label': month_label,
+        'date_from': date_from, 'date_to': date_to,
+        'month_label': month_label,
+        'selected_month': sel_month, 'selected_year': sel_year,
+        'available_years': available_years,
     })
 
 
@@ -82,6 +93,7 @@ def customer_detail(request, customer_id):
     default_to   = today.replace(day=last_day).strftime('%Y-%m-%d')
     date_from = request.GET.get('from', default_from)
     date_to   = request.GET.get('to',   default_to)
+    sel_month, sel_year, month_label, available_years = _month_year_context(date_from, today)
 
     if get_role(request.user) == 'visitor':
         vdata = get_visitor_data(request)
@@ -91,9 +103,13 @@ def customer_detail(request, customer_id):
             reports = [r for r in reports if r['resolved_date'] >= int(date_from.replace('-',''))]
         if date_to:
             reports = [r for r in reports if r['resolved_date'] <= int(date_to.replace('-',''))]
+        reports = sorted(reports, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
         return render(request, 'customers/detail.html', {
             'customer': customer, 'reports': reports, 'is_manager': True,
             'date_from': date_from, 'date_to': date_to,
+            'month_label': month_label,
+            'selected_month': sel_month, 'selected_year': sel_year,
+            'available_years': available_years,
         })
 
     conn = get_connection()
@@ -107,11 +123,14 @@ def customer_detail(request, customer_id):
         where += f" AND resolved_date >= {date_from.replace('-','')}"
     if date_to:
         where += f" AND resolved_date <= {date_to.replace('-','')}"
-    cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC")
+    cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC, resolved_time DESC")
     reports = cursor.fetchall()
     conn.close()
 
     return render(request, 'customers/detail.html', {
         'customer': customer, 'reports': reports, 'is_manager': True,
         'date_from': date_from, 'date_to': date_to,
+        'month_label': month_label,
+        'selected_month': sel_month, 'selected_year': sel_year,
+        'available_years': available_years,
     })
