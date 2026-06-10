@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="page-title"><i class="fa-solid fa-file-lines"></i> التقارير</div>
+<div class="page-title"><i class="fa-solid fa-file-lines"></i> <span data-ar="التقارير" data-en="Reports">التقارير</span></div>
 <div class="month-banner">
   <i class="fa-solid fa-calendar-check"></i>
   <span data-ar="البيانات المعروضة لـ" data-en="Showing data for">البيانات المعروضة لـ</span>
@@ -27,7 +27,7 @@
   <div class="filters-bar">
     {% if is_manager %}
     <select class="select-input" name="agent">
-      <option value="">كل الأيجنت</option>
+      <option value="" data-ar="كل دعم العملاء" data-en="All Support">كل دعم العملاء</option>
       {% for a in agents %}
       <option value="{{ a }}" {% if filters.agent == a %}selected{% endif %}>{{ a }}</option>
       {% endfor %}
@@ -62,10 +62,10 @@
 
     <input type="hidden" name="from" id="dateFrom" value="{{ date_from }}">
     <input type="hidden" name="to"   id="dateTo"   value="{{ date_to }}">
-    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> فلتر</button>
-    <a href="{% url 'reports_list' %}" class="btn btn-ghost"><i class="fa-solid fa-xmark"></i> مسح</a>
+    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> <span data-ar="فلتر" data-en="Filter">فلتر</span></button>
+    <a href="{% url 'reports_list' %}" class="btn btn-ghost"><i class="fa-solid fa-xmark"></i> <span data-ar="مسح" data-en="Clear">مسح</span></a>
     <a href="{% url 'monthly' %}" class="btn btn-ghost" style="margin-right:auto; background:rgba(79,110,247,.12); border-color:var(--accent); color:var(--accent)">
-      <i class="fa-solid fa-calendar-days"></i> تقرير شهري
+      <i class="fa-solid fa-calendar-days"></i> <span data-ar="تقرير شهري" data-en="Monthly Report">تقرير شهري</span>
     </a>
   </div>
 </form>

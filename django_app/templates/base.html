@@ -207,14 +207,15 @@
             align-items: center;
             gap: 10px;
             padding: 10px 12px;
-            background: rgba(239, 68, 68, 0.08);
+            background: rgba(239, 68, 68, 0.14);
             color: #fca5a5;
             border-radius: 8px;
             text-decoration: none;
             font-size: 13.5px;
-            font-weight: 600;
+            font-weight: 700;
             transition: all 0.18s;
-            border: 1px solid rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.30);
+            letter-spacing: 0.2px;
         }
 
         .logout-btn:hover {
@@ -416,7 +417,7 @@
             overflow: hidden;
         }
 
-        .profile-btn:hover .profile-dropdown {
+        .profile-dropdown.show {
             display: block;
         }
 
@@ -984,6 +985,11 @@
             font-size: 13px;
             font-weight: 600;
             transition: all 0.18s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
         }
 
         .btn-primary {
@@ -1164,6 +1170,11 @@
                 padding: 0 12px;
                 gap: 6px;
             }
+            /* footer on mobile */
+            .site-footer {
+                right: 0;
+                padding: 6px 12px;
+            }
 
             .subbar input[type="date"] {
                 font-size: 10px;
@@ -1172,7 +1183,9 @@
             }
 
             .subbar label {
-                display: none;
+                display: inline;
+                font-size: 10px;
+                color: var(--muted);
             }
 
             /* إخفاء عناصر الـ navbar الأقل أهمية على الموبايل */
@@ -1306,6 +1319,13 @@
 
             .main {
                 padding: 10px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .main > * {
+                width: 100%;
+                max-width: 100%;
             }
         }
     </style>
@@ -1330,7 +1350,7 @@
             </a>
             <a href="/agents/" class="nav-item {% block nav_agents %}{% endblock %}">
                 <i class="fa-solid fa-headset"></i>
-                <span data-ar="الأجنت" data-en="Agents">الأجنت</span>
+                <span data-ar="دعم العملاء" data-en="Customer Support">دعم العملاء</span>
             </a>
             <a href="/customers/" class="nav-item {% block nav_customers %}{% endblock %}">
                 <i class="fa-solid fa-users"></i>
@@ -1359,7 +1379,7 @@
             <button class="menu-toggle" id="menuToggle" onclick="openSidebar()">
                 <i class="fa-solid fa-bars"></i>
             </button>
-            <span class="page-breadcrumb">{% block page_title %}{% endblock %}</span>
+            <span class="page-breadcrumb" id="pageBreadcrumb">{% block page_title %}{% endblock %}</span>
         </div>
 
         <div class="navbar-right">
@@ -1520,6 +1540,20 @@
                 if (window.innerWidth <= 767) closeSidebar();
             });
         });
+
+        /* ===== PROFILE DROPDOWN ON CLICK ===== */
+        const profileBtn = document.querySelector('.profile-btn');
+        if (profileBtn) {
+            profileBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const dropdown = this.querySelector('.profile-dropdown');
+                if (dropdown) dropdown.classList.toggle('show');
+            });
+            document.addEventListener('click', function() {
+                const dropdown = profileBtn.querySelector('.profile-dropdown');
+                if (dropdown) dropdown.classList.remove('show');
+            });
+        }
     </script>
 </body>
 
