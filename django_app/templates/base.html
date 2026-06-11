@@ -463,7 +463,7 @@
         .main {
             margin-right: var(--sidebar-w);
             margin-left: 0;
-            margin-top: var(--navbar-h);
+            margin-top: calc(var(--navbar-h) + var(--subbar-h, 48px));
             padding: 24px;
             min-height: calc(100vh - var(--navbar-h));
         }
@@ -474,7 +474,6 @@
         }
 
         .subbar {
-            display:none !important;
             position: fixed;
             top: var(--navbar-h);
             left: 0;
@@ -1364,13 +1363,7 @@
                 max-width: 100%;
             }
         }
-    
-.page-header-inline{
-display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px;
-}
-.page-header-inline .page-title{margin-bottom:0!important;}
-
-</style>
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -1651,21 +1644,6 @@ display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap
             });
         }
     </script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function(){
- const title=document.querySelector('.page-title');
- const form=document.getElementById('dateFilterForm');
- if(!title || !form) return;
- const wrapper=document.createElement('div');
- wrapper.className='page-header-inline';
- title.parentNode.insertBefore(wrapper,title);
- wrapper.appendChild(title);
- wrapper.appendChild(form);
- form.style.display='flex';
-});
-</script>
-
 </body>
 
 </html>

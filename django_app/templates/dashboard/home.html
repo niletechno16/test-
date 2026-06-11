@@ -210,7 +210,17 @@
     </form>
 </div>
 
-<div class="month-banner"><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لـ" data-en="Showing data for">البيانات المعروضة لـ</span> <strong>{{ month_label }}</strong></div>
+<div class="month-banner" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+<div><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لـ" data-en="Showing data for">البيانات المعروضة لـ</span> <strong>{{ month_label }}</strong></div>
+<div style="display:flex;gap:10px;align-items:center;">
+<select style="height:36px;border-radius:8px;">
+<option>فلتر سنة/شهر</option>
+</select>
+<select style="height:36px;border-radius:8px;">
+<option>فلتر أيام مخصص</option>
+</select>
+</div>
+</div>
 
 <!-- Stats -->
 <div class="stats-grid">
