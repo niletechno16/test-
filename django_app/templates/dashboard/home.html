@@ -21,24 +21,54 @@
         margin-bottom: 0;
     }
 
-    .dash-date-filter {
+    /* ===== Smart Filter (next to month banner) ===== */
+    .smart-filter-wrap {
         display: flex;
         align-items: center;
-        gap: 8px;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 6px 12px;
+        gap: 10px;
         flex-wrap: wrap;
     }
 
-    .dash-date-filter label {
+    .filter-mode-toggle {
+        display: flex;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .filter-mode-toggle button {
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 12px;
+        font-family: 'Cairo', sans-serif;
+        padding: 5px 12px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background .15s, color .15s;
+    }
+
+    .filter-mode-toggle button.active {
+        background: var(--accent);
+        color: #fff;
+    }
+
+    .filter-inputs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .filter-inputs label {
         font-size: 12px;
         color: var(--muted);
         white-space: nowrap;
     }
 
-    .dash-date-filter input[type="date"] {
+    .filter-inputs input[type="date"],
+    .filter-inputs input[type="month"] {
         background: var(--surface2);
         border: 1px solid var(--border);
         border-radius: 6px;
@@ -49,12 +79,12 @@
         font-family: 'Cairo', sans-serif;
     }
 
-    .dash-date-filter input[type="date"]:focus {
+    .filter-inputs input:focus {
         outline: none;
         border-color: var(--accent);
     }
 
-    .dash-date-filter .btn-apply {
+    .btn-apply-filter {
         display: flex;
         align-items: center;
         gap: 5px;
@@ -62,7 +92,7 @@
         color: #fff;
         border: none;
         border-radius: 6px;
-        padding: 5px 12px;
+        padding: 5px 14px;
         font-size: 12px;
         font-family: 'Cairo', sans-serif;
         cursor: pointer;
@@ -70,23 +100,7 @@
         height: 30px;
     }
 
-    .dash-date-filter .btn-apply:hover { background: #3b5fe8; }
-
-    .dash-date-filter .btn-reset {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        color: var(--muted);
-        width: 30px;
-        height: 30px;
-        cursor: pointer;
-        font-size: 13px;
-    }
-
-    .dash-date-filter .btn-reset:hover { color: var(--accent); border-color: var(--accent); }
+    .btn-apply-filter:hover { background: #3b5fe8; }
 
     .stats-grid {
         display: grid;
@@ -191,62 +205,47 @@
 
 {% block content %}
 
-<!-- Header row: title + inline date filter -->
+<!-- Header row: title only -->
 <div class="dash-header">
     <div class="page-title"><i class="fa-solid fa-house"></i> <span data-ar="لوحة التحكم" data-en="Dashboard">لوحة التحكم</span></div>
-
-    <form method="get" class="dash-date-filter" id="dashDateForm">
-        <label data-ar="من" data-en="From">من</label>
-        <input type="date" name="from" id="dashDateFrom" value="{{ date_from }}">
-        <label data-ar="إلى" data-en="To">إلى</label>
-        <input type="date" name="to" id="dashDateTo" value="{{ date_to }}">
-        <button type="submit" class="btn-apply">
-            <i class="fa-solid fa-filter"></i>
-            <span data-ar="تطبيق" data-en="Apply">تطبيق</span>
-        </button>
-        <button type="button" class="btn-reset" onclick="dashResetFilter()" title="إعادة الضبط">
-            <i class="fa-solid fa-rotate-left"></i>
-        </button>
-    </form>
 </div>
 
-<div class="month-banner" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
-<div><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لـ" data-en="Showing data for">البيانات المعروضة لـ</span> <strong>{{ month_label }}</strong></div>
+<!-- Month banner + smart filter -->
+<div class="month-banner" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <span><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لـ" data-en="Showing data for">البيانات المعروضة لـ</span> <strong>{{ month_label }}</strong></span>
 
-<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-<label>نوع الفلتر</label>
+    <div class="smart-filter-wrap">
+        <!-- Toggle buttons -->
+        <div class="filter-mode-toggle">
+            <button type="button" id="btnModeMonthYear" class="active" onclick="switchFilterMode('monthyear')">شهر / سنة</button>
+            <button type="button" id="btnModeExact" onclick="switchFilterMode('exact')">تاريخ محدد</button>
+        </div>
 
-<select id="filterType" style="height:36px;border-radius:8px;">
-<option value="month">شهر / سنة</option>
-<option value="custom">تاريخ مخصص</option>
-</select>
+        <!-- Mode: شهر وسنة -->
+        <form method="get" id="formMonthYear" class="filter-inputs">
+            <input type="hidden" name="filter_mode" value="monthyear">
+            <label>الشهر</label>
+            <input type="month" name="month_year" id="inputMonthYear"
+                   value="{{ filter_month_year|default:'' }}"
+                   style="height:30px;">
+            <button type="submit" class="btn-apply-filter">
+                <i class="fa-solid fa-filter"></i> تطبيق
+            </button>
+        </form>
 
-<div id="monthYearFilter" style="display:flex;gap:8px;align-items:center;">
-<select style="height:36px;border-radius:8px;"><option>{{ selected_month|default:'يونيو' }}</option></select>
-<select style="height:36px;border-radius:8px;"><option>{{ selected_year|default:'2026' }}</option></select>
-<button class="btn-apply">تطبيق</button>
+        <!-- Mode: تاريخ محدد -->
+        <form method="get" id="formExact" class="filter-inputs" style="display:none;">
+            <input type="hidden" name="filter_mode" value="exact">
+            <label>من</label>
+            <input type="date" name="from" id="dashDateFrom" value="{{ date_from }}">
+            <label>إلى</label>
+            <input type="date" name="to" id="dashDateTo" value="{{ date_to }}">
+            <button type="submit" class="btn-apply-filter">
+                <i class="fa-solid fa-filter"></i> تطبيق
+            </button>
+        </form>
+    </div>
 </div>
-
-<div id="customDateFilter" style="display:none;gap:8px;align-items:center;">
-<input type="date" style="height:36px;border-radius:8px;">
-<input type="date" style="height:36px;border-radius:8px;">
-<button class="btn-apply">تطبيق</button>
-</div>
-</div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded',function(){
- const t=document.getElementById('filterType');
- if(!t) return;
- const m=document.getElementById('monthYearFilter');
- const c=document.getElementById('customDateFilter');
- t.addEventListener('change',function(){
-   if(this.value==='custom'){m.style.display='none';c.style.display='flex';}
-   else{m.style.display='flex';c.style.display='none';}
- });
-});
-</script>
 
 <!-- Stats -->
 <div class="stats-grid">
@@ -534,14 +533,19 @@ document.addEventListener('DOMContentLoaded',function(){
         }
     });
 
-    function dashResetFilter() {
-        var today = new Date();
-        var y = today.getFullYear();
-        var m = String(today.getMonth() + 1).padStart(2, '0');
-        var lastDay = new Date(y, today.getMonth() + 1, 0).getDate();
-        document.getElementById('dashDateFrom').value = y + '-' + m + '-01';
-        document.getElementById('dashDateTo').value   = y + '-' + m + '-' + String(lastDay).padStart(2, '0');
-        document.getElementById('dashDateForm').submit();
+    function switchFilterMode(mode) {
+        var isMonthYear = mode === 'monthyear';
+        document.getElementById('formMonthYear').style.display = isMonthYear ? 'flex' : 'none';
+        document.getElementById('formExact').style.display     = isMonthYear ? 'none' : 'flex';
+        document.getElementById('btnModeMonthYear').classList.toggle('active', isMonthYear);
+        document.getElementById('btnModeExact').classList.toggle('active', !isMonthYear);
     }
+
+    // On page load: restore active mode from current URL params
+    (function() {
+        var params = new URLSearchParams(window.location.search);
+        var mode = params.get('filter_mode') || 'monthyear';
+        switchFilterMode(mode);
+    })();
 </script>
 {% endblock %}

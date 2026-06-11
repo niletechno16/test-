@@ -20,11 +20,34 @@ def home(request):
     last_day     = calendar.monthrange(today.year, today.month)[1]
     default_to   = today.replace(day=last_day).strftime('%Y-%m-%d')
 
-    date_from = request.GET.get('from', default_from)
-    date_to   = request.GET.get('to',   default_to)
+    filter_mode      = request.GET.get('filter_mode', 'monthyear')
+    filter_month_year = request.GET.get('month_year', '')  # مثلاً: "2026-06"
 
-    # label للعرض في الصفحة
-    month_label = f"{ARABIC_MONTHS[today.month]} {today.year}" 
+    if filter_mode == 'monthyear' and filter_month_year:
+        # حوّل "2026-06" لـ date_from / date_to
+        try:
+            y, m = int(filter_month_year[:4]), int(filter_month_year[5:7])
+            last_day_sel = calendar.monthrange(y, m)[1]
+            date_from    = f"{y}-{m:02d}-01"
+            date_to      = f"{y}-{m:02d}-{last_day_sel:02d}"
+            month_label  = f"{ARABIC_MONTHS[m]} {y}"
+        except (ValueError, IndexError):
+            date_from   = default_from
+            date_to     = default_to
+            month_label = f"{ARABIC_MONTHS[today.month]} {today.year}"
+            filter_month_year = today.strftime('%Y-%m')
+    elif filter_mode == 'exact':
+        date_from   = request.GET.get('from', default_from)
+        date_to     = request.GET.get('to',   default_to)
+        # اعمل label من نطاق التواريخ
+        month_label = f"{date_from} → {date_to}"
+        filter_month_year = ''
+    else:
+        # افتراضي: الشهر الحالي
+        date_from         = default_from
+        date_to           = default_to
+        month_label       = f"{ARABIC_MONTHS[today.month]} {today.year}"
+        filter_month_year = today.strftime('%Y-%m')
 
     # Visitor → بيانات وهمية
     if get_role(request.user) == 'visitor':
@@ -47,6 +70,8 @@ def home(request):
             'date_from':                   date_from,
             'date_to':                     date_to,
             'month_label':                 month_label,
+            'filter_mode':                 filter_mode,
+            'filter_month_year':           filter_month_year,
         })
 
     conn = get_connection()
@@ -138,4 +163,6 @@ def home(request):
         'date_from':           date_from,
         'date_to':             date_to,
         'month_label':         month_label,
+        'filter_mode':         filter_mode,
+        'filter_month_year':   filter_month_year,
     })
