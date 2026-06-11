@@ -14,42 +14,176 @@
         margin-bottom: 24px;
         flex-wrap: wrap;
     }
+
     .agent-header .big-avatar {
-        width: 64px; height: 64px; border-radius: 16px;
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
         background: linear-gradient(135deg, var(--accent), var(--accent2));
-        display: flex; align-items: center; justify-content: center;
-        font-size: 26px; font-weight: 800; flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        font-weight: 800;
+        flex-shrink: 0;
     }
-    .agent-header .info .name { font-size: 20px; font-weight: 800; }
-    .agent-header .info .sub  { color: var(--muted); font-size: 13px; margin-top: 4px; }
-    .agent-header .spacer { flex: 1; }
-    .agent-header .quick-stats { display: flex; gap: 20px; flex-wrap: wrap; }
-    .agent-header .qs { text-align: center; }
-    .agent-header .qs .v { font-size: 22px; font-weight: 800; }
-    .agent-header .qs .l { font-size: 12px; color: var(--muted); }
-    .back-btn { margin-bottom: 20px; }
-    .month-year-picker { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .month-year-picker select {
-        padding:7px 12px; border-radius:8px; border:1px solid var(--border2);
-        background:var(--surface2); color:var(--text); font-family:'Cairo',sans-serif;
-        font-size:13px; outline:none; cursor:pointer;
+
+    .agent-header .info .name {
+        font-size: 20px;
+        font-weight: 800;
     }
-    .month-year-picker select:focus { border-color:var(--blue); }
+
+    .agent-header .info .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 4px;
+    }
+
+    .agent-header .quick-stats {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .agent-header .qs {
+        text-align: center;
+    }
+
+    .agent-header .qs .v {
+        font-size: 22px;
+        font-weight: 800;
+    }
+
+    .agent-header .qs .l {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    /* ── Smart Filter ── */
+    .smart-filter-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .filter-mode-toggle {
+        display: flex;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .filter-mode-toggle button {
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 12px;
+        font-family: 'Cairo', sans-serif;
+        padding: 5px 12px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background .15s, color .15s;
+    }
+
+    .filter-mode-toggle button.active {
+        background: var(--accent);
+        color: #fff;
+    }
+
+    .filter-inputs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .filter-inputs label {
+        font-size: 12px;
+        color: var(--muted);
+        white-space: nowrap;
+    }
+
+    .filter-inputs input[type="date"],
+    .filter-inputs input[type="month"] {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 12px;
+        padding: 4px 8px;
+        height: 30px;
+        font-family: 'Cairo', sans-serif;
+    }
+
+    .filter-inputs input:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
+    .btn-apply-filter {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 5px 14px;
+        font-size: 12px;
+        font-family: 'Cairo', sans-serif;
+        cursor: pointer;
+        white-space: nowrap;
+        height: 30px;
+    }
+
+    .btn-apply-filter:hover {
+        background: #3b5fe8;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="back-btn">
-    <a href="{% url 'agents_list' %}{% if date_from %}?from={{ date_from }}&to={{ date_to }}{% endif %}"
+<div class="back-btn" style="margin-bottom:20px;">
+    <a href="{% url 'agents_list' %}?filter_mode={{ filter_mode }}&month_year={{ filter_month_year }}&from={{ date_from }}&to={{ date_to }}"
         class="btn btn-ghost">
-        <i class="fa-solid fa-arrow-right"></i> رجوع
+        <i class="fa-solid fa-arrow-right"></i> <span data-ar="رجوع" data-en="Back">رجوع</span>
     </a>
 </div>
 
-<div class="month-banner">
-  <i class="fa-solid fa-calendar-check"></i>
-  <span data-ar="البيانات المعروضة لـ" data-en="Showing data for">البيانات المعروضة لـ</span>
-  <strong>{{ month_label }}</strong>
+<!-- Month banner + smart filter -->
+<div class="month-banner"
+    style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+    <span><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لـ"
+            data-en="Showing data for">البيانات المعروضة لـ</span> <strong>{{ month_label }}</strong></span>
+
+    <div class="smart-filter-wrap">
+        <div class="filter-mode-toggle">
+            <button type="button" id="btnModeMonthYear" onclick="switchFilterMode('monthyear')"><span
+                    data-ar="شهر / سنة" data-en="Month / Year">شهر / سنة</span></button>
+            <button type="button" id="btnModeExact" onclick="switchFilterMode('exact')"><span data-ar="تاريخ محدد"
+                    data-en="Exact Date">تاريخ محدد</span></button>
+        </div>
+
+        <form method="get" id="formMonthYear" class="filter-inputs">
+            <input type="hidden" name="filter_mode" value="monthyear">
+            <label data-ar="الشهر" data-en="Month">الشهر</label>
+            <input type="month" name="month_year" value="{{ filter_month_year|default:'' }}">
+            <button type="submit" class="btn-apply-filter"><i class="fa-solid fa-filter"></i> <span data-ar="تطبيق"
+                    data-en="Apply">تطبيق</span></button>
+        </form>
+
+        <form method="get" id="formExact" class="filter-inputs" style="display:none;">
+            <input type="hidden" name="filter_mode" value="exact">
+            <label data-ar="من" data-en="From">من</label>
+            <input type="date" name="from" value="{{ date_from }}">
+            <label data-ar="إلى" data-en="To">إلى</label>
+            <input type="date" name="to" value="{{ date_to }}">
+            <button type="submit" class="btn-apply-filter"><i class="fa-solid fa-filter"></i> <span data-ar="تطبيق"
+                    data-en="Apply">تطبيق</span></button>
+        </form>
+    </div>
 </div>
 
 <!-- Agent Header Card -->
@@ -59,7 +193,7 @@
         <div class="name">{{ agent.agent_name }}</div>
         <div class="sub">ID: {{ agent.agent_id|default:"—" }}</div>
     </div>
-    <div class="spacer"></div>
+    <div style="flex:1"></div>
     <div class="quick-stats">
         <div class="qs">
             <div class="v">{{ reports|length }}</div>
@@ -74,40 +208,10 @@
     </div>
 </div>
 
-<!-- Month/Year Filter -->
-<form method="get" style="margin-bottom:16px">
-  <div class="filters-bar">
-    <div class="month-year-picker">
-      <select name="month" id="monthPicker" onchange="applyMonthYear()">
-        <option value="1"  {% if selected_month == 1  %}selected{% endif %}>يناير</option>
-        <option value="2"  {% if selected_month == 2  %}selected{% endif %}>فبراير</option>
-        <option value="3"  {% if selected_month == 3  %}selected{% endif %}>مارس</option>
-        <option value="4"  {% if selected_month == 4  %}selected{% endif %}>أبريل</option>
-        <option value="5"  {% if selected_month == 5  %}selected{% endif %}>مايو</option>
-        <option value="6"  {% if selected_month == 6  %}selected{% endif %}>يونيو</option>
-        <option value="7"  {% if selected_month == 7  %}selected{% endif %}>يوليو</option>
-        <option value="8"  {% if selected_month == 8  %}selected{% endif %}>أغسطس</option>
-        <option value="9"  {% if selected_month == 9  %}selected{% endif %}>سبتمبر</option>
-        <option value="10" {% if selected_month == 10 %}selected{% endif %}>أكتوبر</option>
-        <option value="11" {% if selected_month == 11 %}selected{% endif %}>نوفمبر</option>
-        <option value="12" {% if selected_month == 12 %}selected{% endif %}>ديسمبر</option>
-      </select>
-      <select name="year" id="yearPicker" onchange="applyMonthYear()">
-        {% for y in available_years %}
-        <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <input type="hidden" name="from" id="dateFrom" value="{{ date_from }}">
-    <input type="hidden" name="to"   id="dateTo"   value="{{ date_to }}">
-    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> فلتر</button>
-    <a href="{% url 'agent_detail' agent.agent_id %}" class="btn btn-ghost"><i class="fa-solid fa-xmark"></i> مسح</a>
-  </div>
-</form>
-
 <!-- Reports Table -->
 <div class="card">
-    <div class="section-title"><span data-ar="سجل المحادثات" data-en="Conversation History">سجل المحادثات</span> ({{ reports|length }})</div>
+    <div class="section-title"><span data-ar="سجل المحادثات" data-en="Conversation History">سجل المحادثات</span> ({{
+        reports|length }})</div>
     <div class="table-wrap">
         <table>
             <thead>
@@ -135,35 +239,43 @@
                         <span class="badge badge-yellow">{{ r.classification }}</span>
                         {% endif %}
                     </td>
-                    <td>{% if r.resolved_date %}{% with d=r.resolved_date|stringformat:"s" %}{{ d|slice:":4" }}-{{ d|slice:"4:6" }}-{{ d|slice:"6:8" }}{% endwith %}{% endif %}</td>
+                    <td>{% if r.resolved_date %}{% with d=r.resolved_date|stringformat:"s" %}{{ d|slice:":4" }}-{{
+                        d|slice:"4:6" }}-{{ d|slice:"6:8" }}{% endwith %}{% endif %}</td>
                     <td>{{ r.resolved_time }}</td>
                     <td>
                         {% if r.resolution_minutes %}
-                          <span style="font-size:13px;font-weight:600;color:var(--blue)">{{ r.resolution_minutes }} د</span>
+                        <span style="font-size:13px;font-weight:600;color:var(--blue)">{{ r.resolution_minutes }} <span
+                                data-ar="د" data-en="min">د</span></span>
                         {% else %}
-                          <span style="color:var(--muted);font-size:12px">—</span>
+                        <span style="color:var(--muted);font-size:12px">—</span>
                         {% endif %}
                     </td>
                     <td style="max-width:300px;color:var(--muted);font-size:13px">{{ r.summary|truncatechars:80 }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" style="text-align:center;color:var(--muted);padding:30px">لا توجد محادثات</td>
+                    <td colspan="7" style="text-align:center;color:var(--muted);padding:30px" data-ar="لا توجد محادثات"
+                        data-en="No conversations">لا توجد محادثات</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-function applyMonthYear() {
-  const month = parseInt(document.getElementById('monthPicker').value);
-  const year  = parseInt(document.getElementById('yearPicker').value);
-  const lastDay = new Date(year, month, 0).getDate();
-  const pad = n => String(n).padStart(2,'0');
-  document.getElementById('dateFrom').value = `${year}-${pad(month)}-01`;
-  document.getElementById('dateTo').value   = `${year}-${pad(month)}-${pad(lastDay)}`;
-}
+    function switchFilterMode(mode) {
+        var isMY = mode === 'monthyear';
+        document.getElementById('formMonthYear').style.display = isMY ? 'flex' : 'none';
+        document.getElementById('formExact').style.display = isMY ? 'none' : 'flex';
+        document.getElementById('btnModeMonthYear').classList.toggle('active', isMY);
+        document.getElementById('btnModeExact').classList.toggle('active', !isMY);
+    }
+    (function () {
+        var mode = new URLSearchParams(window.location.search).get('filter_mode') || 'monthyear';
+        switchFilterMode(mode);
+    })();
 </script>
 {% endblock %}

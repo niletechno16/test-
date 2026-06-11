@@ -10,28 +10,45 @@ ARABIC_MONTHS = {
     7:'يوليو',8:'أغسطس',9:'سبتمبر',10:'أكتوبر',11:'نوفمبر',12:'ديسمبر'
 }
 
-def _month_year_context(date_from, today):
-    try:
-        parts = date_from.split('-')
-        sel_year  = int(parts[0])
-        sel_month = int(parts[1])
-    except Exception:
-        sel_year  = today.year
-        sel_month = today.month
-    month_label     = f"{ARABIC_MONTHS[sel_month]} {sel_year}"
-    available_years = list(range(today.year - 3, today.year + 1))
-    return sel_month, sel_year, month_label, available_years
 
-@login_required
-def agents_list(request):
-    today = date.today()
+def _resolve_filter(request, today):
+    """Parse filter_mode/month_year/from/to and return (date_from, date_to, month_label, filter_mode, filter_month_year)."""
     default_from = today.replace(day=1).strftime('%Y-%m-%d')
     last_day     = calendar.monthrange(today.year, today.month)[1]
     default_to   = today.replace(day=last_day).strftime('%Y-%m-%d')
-    date_from = request.GET.get('from', default_from)
-    date_to   = request.GET.get('to',   default_to)
-    search    = request.GET.get('search', '')
-    sel_month, sel_year, month_label, available_years = _month_year_context(date_from, today)
+
+    filter_mode       = request.GET.get('filter_mode', 'monthyear')
+    filter_month_year = request.GET.get('month_year', '')
+
+    if filter_mode == 'monthyear' and filter_month_year:
+        try:
+            y, m = int(filter_month_year[:4]), int(filter_month_year[5:7])
+            ld   = calendar.monthrange(y, m)[1]
+            date_from   = f"{y}-{m:02d}-01"
+            date_to     = f"{y}-{m:02d}-{ld:02d}"
+            month_label = f"{ARABIC_MONTHS[m]} {y}"
+        except (ValueError, IndexError):
+            date_from, date_to = default_from, default_to
+            month_label = f"{ARABIC_MONTHS[today.month]} {today.year}"
+            filter_month_year = today.strftime('%Y-%m')
+    elif filter_mode == 'exact':
+        date_from   = request.GET.get('from', default_from)
+        date_to     = request.GET.get('to',   default_to)
+        month_label = f"{date_from} ← {date_to}"
+        filter_month_year = ''
+    else:
+        date_from, date_to = default_from, default_to
+        month_label       = f"{ARABIC_MONTHS[today.month]} {today.year}"
+        filter_month_year = today.strftime('%Y-%m')
+
+    return date_from, date_to, month_label, filter_mode, filter_month_year
+
+
+@login_required
+def agents_list(request):
+    today  = date.today()
+    date_from, date_to, month_label, filter_mode, filter_month_year = _resolve_filter(request, today)
+    search = request.GET.get('search', '')
 
     if get_role(request.user) == 'visitor':
         vdata = get_visitor_data(request)
@@ -42,10 +59,10 @@ def agents_list(request):
             'agents': agents, 'is_manager': True,
             'search': search, 'date_from': date_from, 'date_to': date_to,
             'month_label': month_label,
-            'selected_month': sel_month, 'selected_year': sel_year,
-            'available_years': available_years,
+            'filter_mode': filter_mode, 'filter_month_year': filter_month_year,
         })
-    conn = get_connection()
+
+    conn   = get_connection()
     cursor = conn.cursor(as_dict=True)
 
     where = "WHERE 1=1"
@@ -72,41 +89,32 @@ def agents_list(request):
         'agents': agents, 'is_manager': is_manager_level(request.user),
         'search': search, 'date_from': date_from, 'date_to': date_to,
         'month_label': month_label,
-        'selected_month': sel_month, 'selected_year': sel_year,
-        'available_years': available_years,
+        'filter_mode': filter_mode, 'filter_month_year': filter_month_year,
     })
 
 
 @login_required
 def agent_detail(request, agent_id):
     today = date.today()
-    default_from = today.replace(day=1).strftime('%Y-%m-%d')
-    last_day     = calendar.monthrange(today.year, today.month)[1]
-    default_to   = today.replace(day=last_day).strftime('%Y-%m-%d')
-    date_from = request.GET.get('from', default_from)
-    date_to   = request.GET.get('to',   default_to)
-    sel_month, sel_year, month_label, available_years = _month_year_context(date_from, today)
+    date_from, date_to, month_label, filter_mode, filter_month_year = _resolve_filter(request, today)
 
     if get_role(request.user) == 'visitor':
         vdata = get_visitor_data(request)
         agent = next((a for a in vdata['agents'] if a['agent_id'] == agent_id), None)
         agent_reports = [r for r in vdata['reports'] if r['agent_id'] == agent_id]
         if date_from:
-            date_from_int = int(date_from.replace('-', ''))
-            agent_reports = [r for r in agent_reports if r['resolved_date'] >= date_from_int]
+            agent_reports = [r for r in agent_reports if r['resolved_date'] >= int(date_from.replace('-', ''))]
         if date_to:
-            date_to_int = int(date_to.replace('-', ''))
-            agent_reports = [r for r in agent_reports if r['resolved_date'] <= date_to_int]
+            agent_reports = [r for r in agent_reports if r['resolved_date'] <= int(date_to.replace('-', ''))]
         agent_reports = sorted(agent_reports, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
         return render(request, 'agents/detail.html', {
             'agent': agent, 'reports': agent_reports,
             'is_manager': True, 'date_from': date_from, 'date_to': date_to,
             'month_label': month_label,
-            'selected_month': sel_month, 'selected_year': sel_year,
-            'available_years': available_years,
+            'filter_mode': filter_mode, 'filter_month_year': filter_month_year,
         })
 
-    conn = get_connection()
+    conn   = get_connection()
     cursor = conn.cursor(as_dict=True)
 
     where = f"WHERE agent_id = {agent_id}"
@@ -127,6 +135,5 @@ def agent_detail(request, agent_id):
         'is_manager': is_manager_level(request.user),
         'date_from': date_from, 'date_to': date_to,
         'month_label': month_label,
-        'selected_month': sel_month, 'selected_year': sel_year,
-        'available_years': available_years,
+        'filter_mode': filter_mode, 'filter_month_year': filter_month_year,
     })

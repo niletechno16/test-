@@ -5,51 +5,49 @@ from visitor_data import get_visitor_data
 from datetime import date
 import calendar
 
-
 ARABIC_MONTHS = {
     1:'يناير',2:'فبراير',3:'مارس',4:'أبريل',5:'مايو',6:'يونيو',
     7:'يوليو',8:'أغسطس',9:'سبتمبر',10:'أكتوبر',11:'نوفمبر',12:'ديسمبر'
 }
 
 
-@login_required
-def home(request):
-    today = date.today()
-    # الافتراضي: أول وآخر يوم في الشهر الحالي
+def _resolve_filter(request, today):
     default_from = today.replace(day=1).strftime('%Y-%m-%d')
     last_day     = calendar.monthrange(today.year, today.month)[1]
     default_to   = today.replace(day=last_day).strftime('%Y-%m-%d')
 
-    filter_mode      = request.GET.get('filter_mode', 'monthyear')
-    filter_month_year = request.GET.get('month_year', '')  # مثلاً: "2026-06"
+    filter_mode       = request.GET.get('filter_mode', 'monthyear')
+    filter_month_year = request.GET.get('month_year', '')
 
     if filter_mode == 'monthyear' and filter_month_year:
-        # حوّل "2026-06" لـ date_from / date_to
         try:
             y, m = int(filter_month_year[:4]), int(filter_month_year[5:7])
-            last_day_sel = calendar.monthrange(y, m)[1]
-            date_from    = f"{y}-{m:02d}-01"
-            date_to      = f"{y}-{m:02d}-{last_day_sel:02d}"
-            month_label  = f"{ARABIC_MONTHS[m]} {y}"
+            ld   = calendar.monthrange(y, m)[1]
+            date_from   = f"{y}-{m:02d}-01"
+            date_to     = f"{y}-{m:02d}-{ld:02d}"
+            month_label = f"{ARABIC_MONTHS[m]} {y}"
         except (ValueError, IndexError):
-            date_from   = default_from
-            date_to     = default_to
+            date_from, date_to = default_from, default_to
             month_label = f"{ARABIC_MONTHS[today.month]} {today.year}"
             filter_month_year = today.strftime('%Y-%m')
     elif filter_mode == 'exact':
         date_from   = request.GET.get('from', default_from)
         date_to     = request.GET.get('to',   default_to)
-        # اعمل label من نطاق التواريخ
-        month_label = f"{date_from} → {date_to}"
+        month_label = f"{date_from} ← {date_to}"
         filter_month_year = ''
     else:
-        # افتراضي: الشهر الحالي
-        date_from         = default_from
-        date_to           = default_to
+        date_from, date_to = default_from, default_to
         month_label       = f"{ARABIC_MONTHS[today.month]} {today.year}"
         filter_month_year = today.strftime('%Y-%m')
 
-    # Visitor → بيانات وهمية
+    return date_from, date_to, month_label, filter_mode, filter_month_year
+
+
+@login_required
+def home(request):
+    today = date.today()
+    date_from, date_to, month_label, filter_mode, filter_month_year = _resolve_filter(request, today)
+
     if get_role(request.user) == 'visitor':
         vdata = get_visitor_data(request)
         return render(request, 'dashboard/home.html', {
@@ -74,7 +72,7 @@ def home(request):
             'filter_month_year':           filter_month_year,
         })
 
-    conn = get_connection()
+    conn   = get_connection()
     cursor = conn.cursor(as_dict=True)
 
     where = "WHERE 1=1"
@@ -120,6 +118,7 @@ def home(request):
         GROUP BY classification ORDER BY total DESC
     """)
     common_problems = cursor.fetchall()
+
     cursor.execute(f"""
         SELECT AVG(CAST(resolution_minutes AS FLOAT)) AS avg_mins
         FROM Customer_service_reports_by_A {where}
@@ -145,24 +144,22 @@ def home(request):
     resolved_pct   = round(total_resolved / total_reports * 100) if total_reports else 0
     unresolved_pct = round(total_unresolved / total_reports * 100) if total_reports else 0
 
-    # تأكد إن المجموع منطقي — لو الاثنين صفر مع وجود تقارير، يبقى فيه تصنيفات أخرى
-
     return render(request, 'dashboard/home.html', {
-        'total_reports':       total_reports,
-        'total_resolved':      total_resolved,
-        'total_unresolved':    total_unresolved,
-        'total_customers':     total_customers,
-        'top_agents_resolved': top_agents_resolved,
-        'top_customers':       top_customers,
-        'common_problems':     common_problems,
-        'resolved_pct':        resolved_pct,
-        'unresolved_pct':      unresolved_pct,
+        'total_reports':           total_reports,
+        'total_resolved':          total_resolved,
+        'total_unresolved':        total_unresolved,
+        'total_customers':         total_customers,
+        'top_agents_resolved':     top_agents_resolved,
+        'top_customers':           top_customers,
+        'common_problems':         common_problems,
+        'resolved_pct':            resolved_pct,
+        'unresolved_pct':          unresolved_pct,
         'avg_resolution_overall':  avg_resolution_overall,
         'avg_resolution_by_agent': avg_resolution_by_agent,
         'is_manager':              is_manager_level(request.user),
-        'date_from':           date_from,
-        'date_to':             date_to,
-        'month_label':         month_label,
-        'filter_mode':         filter_mode,
-        'filter_month_year':   filter_month_year,
+        'date_from':               date_from,
+        'date_to':                 date_to,
+        'month_label':             month_label,
+        'filter_mode':             filter_mode,
+        'filter_month_year':       filter_month_year,
     })

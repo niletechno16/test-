@@ -4,8 +4,13 @@
 {% block extra_css %}
 <style>
     /* إخفاء الـ subbar كله في صفحة الداش بورد */
-    .subbar { display: none !important; }
-    .main   { margin-top: var(--navbar-h) !important; }
+    .subbar {
+        display: none !important;
+    }
+
+    .main {
+        margin-top: var(--navbar-h) !important;
+    }
 
     /* ===== header row: title + inline filter ===== */
     .dash-header {
@@ -100,7 +105,9 @@
         height: 30px;
     }
 
-    .btn-apply-filter:hover { background: #3b5fe8; }
+    .btn-apply-filter:hover {
+        background: #3b5fe8;
+    }
 
     .stats-grid {
         display: grid;
@@ -207,17 +214,21 @@
 
 <!-- Header row: title only -->
 <div class="dash-header">
-    <div class="page-title"><i class="fa-solid fa-house"></i> <span data-ar="لوحة التحكم" data-en="Dashboard">لوحة التحكم</span></div>
+    <div class="page-title"><i class="fa-solid fa-house"></i> <span data-ar="لوحة التحكم" data-en="Dashboard">لوحة
+            التحكم</span></div>
 </div>
 
 <!-- Month banner + smart filter -->
-<div class="month-banner" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-    <span><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لـ" data-en="Showing data for">البيانات المعروضة لـ</span> <strong>{{ month_label }}</strong></span>
+<div class="month-banner"
+    style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <span><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لـ"
+            data-en="Showing data for">البيانات المعروضة لـ</span> <strong>{{ month_label }}</strong></span>
 
     <div class="smart-filter-wrap">
         <!-- Toggle buttons -->
         <div class="filter-mode-toggle">
-            <button type="button" id="btnModeMonthYear" class="active" onclick="switchFilterMode('monthyear')">شهر / سنة</button>
+            <button type="button" id="btnModeMonthYear" class="active" onclick="switchFilterMode('monthyear')">شهر /
+                سنة</button>
             <button type="button" id="btnModeExact" onclick="switchFilterMode('exact')">تاريخ محدد</button>
         </div>
 
@@ -225,9 +236,8 @@
         <form method="get" id="formMonthYear" class="filter-inputs">
             <input type="hidden" name="filter_mode" value="monthyear">
             <label>الشهر</label>
-            <input type="month" name="month_year" id="inputMonthYear"
-                   value="{{ filter_month_year|default:'' }}"
-                   style="height:30px;">
+            <input type="month" name="month_year" id="inputMonthYear" value="{{ filter_month_year|default:'' }}"
+                style="height:30px;">
             <button type="submit" class="btn-apply-filter">
                 <i class="fa-solid fa-filter"></i> تطبيق
             </button>
@@ -301,13 +311,15 @@
 
     <!-- أكتر أيجنت حل -->
     <div class="chart-card">
-        <div class="section-title" data-ar="أكثر أيجنت حل مشاكل" data-en="Top Resolving Agents">أكثر أيجنت حل مشاكل</div>
+        <div class="section-title" data-ar="أكثر أيجنت حل مشاكل" data-en="Top Resolving Agents">أكثر أيجنت حل مشاكل
+        </div>
         <canvas id="agentsChart"></canvas>
     </div>
 
     <!-- أكتر عميل تواصل -->
     <div class="chart-card">
-        <div class="section-title" data-ar="أكثر العملاء تواصلاً" data-en="Top Contacting Customers">أكثر العملاء تواصلاً</div>
+        <div class="section-title" data-ar="أكثر العملاء تواصلاً" data-en="Top Contacting Customers">أكثر العملاء
+            تواصلاً</div>
         <canvas id="customersChart"></canvas>
     </div>
 
@@ -321,14 +333,16 @@
                     <div class="pie-legend-dot" style="background:var(--green)"></div>
                     <div>
                         <div style="font-weight:700;font-size:18px;color:var(--green)">{{ resolved_pct }}%</div>
-                        <div style="font-size:12px;color:var(--muted)" data-ar="تم الحل" data-en="Resolved">تم الحل</div>
+                        <div style="font-size:12px;color:var(--muted)" data-ar="تم الحل" data-en="Resolved">تم الحل
+                        </div>
                     </div>
                 </div>
                 <div class="pie-legend-item">
                     <div class="pie-legend-dot" style="background:var(--red)"></div>
                     <div>
                         <div style="font-weight:700;font-size:18px;color:var(--red)">{{ unresolved_pct }}%</div>
-                        <div style="font-size:12px;color:var(--muted)" data-ar="لم يتم الحل" data-en="Unresolved">لم يتم الحل</div>
+                        <div style="font-size:12px;color:var(--muted)" data-ar="لم يتم الحل" data-en="Unresolved">لم يتم
+                            الحل</div>
                     </div>
                 </div>
                 <div class="pie-legend-item">
@@ -344,7 +358,8 @@
 
     <!-- أكتر مشكلة اتكررت -->
     <div class="chart-card">
-        <div class="section-title" data-ar="أكثر المشاكل تكراراً" data-en="Most Common Issues">أكثر المشاكل تكراراً</div>
+        <div class="section-title" data-ar="أكثر المشاكل تكراراً" data-en="Most Common Issues">أكثر المشاكل تكراراً
+        </div>
         <ul class="problems-list">
             {% for p in common_problems %}
             <li>
@@ -365,13 +380,15 @@
 
     <!-- متوسط وقت الحل للعملاء -->
     <div class="chart-card">
-        <div class="section-title" data-ar="متوسط وقت الحل لكل أيجنت (دقيقة)" data-en="Avg. Resolution Time per Agent (min)">متوسط وقت الحل لكل أيجنت (دقيقة)</div>
+        <div class="section-title" data-ar="متوسط وقت الحل لكل أيجنت (دقيقة)"
+            data-en="Avg. Resolution Time per Agent (min)">متوسط وقت الحل لكل أيجنت (دقيقة)</div>
         <canvas id="agentAvgChart"></canvas>
     </div>
 
     <!-- ترافيك الرسائل -->
     <div class="chart-card">
-        <div class="section-title" data-ar="ترافيك الرسائل عبر الوقت" data-en="Message Traffic Over Time">ترافيك الرسائل عبر الوقت</div>
+        <div class="section-title" data-ar="ترافيك الرسائل عبر الوقت" data-en="Message Traffic Over Time">ترافيك الرسائل
+            عبر الوقت</div>
         <canvas id="trafficChart"></canvas>
     </div>
 
@@ -395,37 +412,37 @@
         type: 'bar',
         data: {
             labels: [{% for a in top_agents_resolved %}"{{ a.agent_name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
-            datasets: [
-                {
-                    label: 'محلول',
-                    data: [{% for a in top_agents_resolved %}{{ a.resolved }}{% if not forloop.last %}, {% endif %}{% endfor %}],
-                    backgroundColor: 'rgba(34,197,94,0.75)',
-                    borderRadius: 6,
-                    borderSkipped: false,
-                    barPercentage: 0.55,
+        datasets: [
+        {
+            label: 'محلول',
+            data: [{% for a in top_agents_resolved %}{{ a.resolved }}{% if not forloop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: 'rgba(34,197,94,0.75)',
+        borderRadius: 6,
+            borderSkipped: false,
+                barPercentage: 0.55,
                     categoryPercentage: 0.6,
                 },
-                {
-                    label: 'غير محلول',
-                    data: [{% for a in top_agents_resolved %}{{ a.unresolved }}{% if not forloop.last %}, {% endif %}{% endfor %}],
-                    backgroundColor: 'rgba(239,68,68,0.75)',
-                    borderRadius: 6,
-                    borderSkipped: false,
-                    barPercentage: 0.55,
+    {
+        label: 'غير محلول',
+            data: [{% for a in top_agents_resolved %} { { a.unresolved } } {% if not forloop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: 'rgba(239,68,68,0.75)',
+        borderRadius: 6,
+            borderSkipped: false,
+                barPercentage: 0.55,
                     categoryPercentage: 0.6,
                 },
             ]
         },
-        options: {
-            responsive: true, maintainAspectRatio: true,
+    options: {
+        responsive: true, maintainAspectRatio: true,
             plugins: {
-                legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 11 } } }
-            },
-            scales: {
-                y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
-                x: { grid: { display: false }, border: { display: false } }
-            }
+            legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 11 } } }
+        },
+        scales: {
+            y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
+            x: { grid: { display: false }, border: { display: false } }
         }
+    }
     });
 
     // Customers Bar
@@ -433,24 +450,24 @@
         type: 'bar',
         data: {
             labels: [{% for c in top_customers %}"{{ c.customer_name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
-            datasets: [{
-                label: 'عدد المحادثات',
-                data: [{% for c in top_customers %}{{ c.total }}{% if not forloop.last %}, {% endif %}{% endfor %}],
-                backgroundColor: 'rgba(124,58,237,0.7)',
-                borderRadius: 8,
-                borderSkipped: false,
+        datasets: [{
+            label: 'عدد المحادثات',
+            data: [{% for c in top_customers %}{{ c.total }}{% if not forloop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: 'rgba(124,58,237,0.7)',
+        borderRadius: 8,
+            borderSkipped: false,
                 barPercentage: 0.55,
-                categoryPercentage: 0.6,
+                    categoryPercentage: 0.6,
             }]
         },
-        options: {
-            responsive: true, maintainAspectRatio: true,
+    options: {
+        responsive: true, maintainAspectRatio: true,
             plugins: { legend: { display: false } },
-            scales: {
-                y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
-                x: { grid: { display: false }, border: { display: false } }
-            }
+        scales: {
+            y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
+            x: { grid: { display: false }, border: { display: false } }
         }
+    }
     });
 
     // Pie
@@ -476,24 +493,24 @@
         type: 'bar',
         data: {
             labels: [{% for a in avg_resolution_by_agent %}"{{ a.name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
-            datasets: [{
-                label: 'متوسط وقت الحل (د)',
-                data: [{% for a in avg_resolution_by_agent %}{{ a.avg }}{% if not forloop.last %}, {% endif %}{% endfor %}],
-                backgroundColor: 'rgba(245,158,11,0.7)',
-                borderRadius: 8,
-                borderSkipped: false,
+        datasets: [{
+            label: 'متوسط وقت الحل (د)',
+            data: [{% for a in avg_resolution_by_agent %}{{ a.avg }}{% if not forloop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: 'rgba(245,158,11,0.7)',
+        borderRadius: 8,
+            borderSkipped: false,
                 barPercentage: 0.25,
-                categoryPercentage: 0.5,
+                    categoryPercentage: 0.5,
             }]
         },
-        options: {
-            responsive: true, maintainAspectRatio: true,
+    options: {
+        responsive: true, maintainAspectRatio: true,
             plugins: { legend: { display: false } },
-            scales: {
-                y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 10 } },
-                x: { grid: { display: false }, border: { display: false } }
-            }
+        scales: {
+            y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 10 } },
+            x: { grid: { display: false }, border: { display: false } }
         }
+    }
     });
 
     // Traffic Line Chart
@@ -501,48 +518,48 @@
         type: 'line',
         data: {
             labels: [{% for t in traffic_by_date %}"{{ t.date }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
-            datasets: [{
-                label: 'عدد الرسائل',
-                data: [{% for t in traffic_by_date %}{{ t.count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
-                borderColor: 'rgba(37,99,235,0.9)',
-                backgroundColor: 'rgba(37,99,235,0.08)',
-                borderWidth: 2.5,
+        datasets: [{
+            label: 'عدد الرسائل',
+            data: [{% for t in traffic_by_date %}{{ t.count }}{% if not forloop.last %}, {% endif %} {% endfor %}],
+    borderColor: 'rgba(37,99,235,0.9)',
+        backgroundColor: 'rgba(37,99,235,0.08)',
+            borderWidth: 2.5,
                 pointRadius: 3,
-                pointHoverRadius: 5,
-                pointBackgroundColor: 'rgba(37,99,235,0.9)',
-                fill: true,
-                tension: 0.45,
+                    pointHoverRadius: 5,
+                        pointBackgroundColor: 'rgba(37,99,235,0.9)',
+                            fill: true,
+                                tension: 0.45,
             }]
         },
-        options: {
-            responsive: true, maintainAspectRatio: true,
+    options: {
+        responsive: true, maintainAspectRatio: true,
             plugins: { legend: { display: false } },
-            scales: {
-                y: {
-                    grid: { display: false },
-                    border: { display: false },
-                    ticks: { stepSize: 1 },
-                    suggestedMin: 2,
+        scales: {
+            y: {
+                grid: { display: false },
+                border: { display: false },
+                ticks: { stepSize: 1 },
+                suggestedMin: 2,
                 },
-                x: {
-                    grid: { display: false },
-                    border: { display: false },
-                    ticks: { maxRotation: 0, maxTicksLimit: 8 }
-                }
+            x: {
+                grid: { display: false },
+                border: { display: false },
+                ticks: { maxRotation: 0, maxTicksLimit: 8 }
             }
         }
+    }
     });
 
     function switchFilterMode(mode) {
         var isMonthYear = mode === 'monthyear';
         document.getElementById('formMonthYear').style.display = isMonthYear ? 'flex' : 'none';
-        document.getElementById('formExact').style.display     = isMonthYear ? 'none' : 'flex';
+        document.getElementById('formExact').style.display = isMonthYear ? 'none' : 'flex';
         document.getElementById('btnModeMonthYear').classList.toggle('active', isMonthYear);
         document.getElementById('btnModeExact').classList.toggle('active', !isMonthYear);
     }
 
     // On page load: restore active mode from current URL params
-    (function() {
+    (function () {
         var params = new URLSearchParams(window.location.search);
         var mode = params.get('filter_mode') || 'monthyear';
         switchFilterMode(mode);
