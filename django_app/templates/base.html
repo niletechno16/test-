@@ -483,7 +483,6 @@
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
-            justify-content: flex-end;
             padding: 0 24px;
             z-index: 140;
             gap: 8px;
@@ -493,21 +492,8 @@
         .subbar form {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             flex-wrap: nowrap;
-        }
-
-        .subbar-group {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .subbar-divider {
-            width: 1px;
-            height: 22px;
-            background: var(--border2);
-            flex-shrink: 0;
         }
 
         .subbar label {
@@ -517,8 +503,7 @@
             white-space: nowrap;
         }
 
-        .subbar input[type="date"],
-        .subbar-select {
+        .subbar input[type="date"] {
             padding: 4px 7px;
             border: 1px solid var(--border2);
             border-radius: 6px;
@@ -528,29 +513,14 @@
             font-size: 11px;
             outline: none;
             color-scheme: dark;
-            cursor: pointer;
         }
 
-        body.light-mode .subbar input[type="date"],
-        body.light-mode .subbar-select {
+        body.light-mode .subbar input[type="date"] {
             color-scheme: light;
         }
 
-        .subbar input[type="date"]:focus,
-        .subbar-select:focus {
+        .subbar input[type="date"]:focus {
             border-color: var(--blue);
-        }
-
-        .btn-reset {
-            padding: 5px 8px !important;
-            background: transparent !important;
-            border-color: var(--border2) !important;
-            color: var(--muted) !important;
-        }
-
-        .btn-reset:hover {
-            color: var(--red) !important;
-            border-color: var(--red) !important;
         }
 
         /* ===== PAGE TITLE ===== */
@@ -1206,21 +1176,16 @@
                 padding: 6px 12px;
             }
 
-            .subbar input[type="date"],
-            .subbar-select {
+            .subbar input[type="date"] {
                 font-size: 10px;
                 padding: 4px 5px;
-                max-width: 100px;
+                max-width: 120px;
             }
 
             .subbar label {
                 display: inline;
                 font-size: 10px;
                 color: var(--muted);
-            }
-
-            .subbar-divider {
-                display: none;
             }
 
             /* إخفاء عناصر الـ navbar الأقل أهمية على الموبايل */
@@ -1457,111 +1422,24 @@
         </div>
     </nav>
 
-    <!-- ===== SUBBAR ===== -->
+    <!-- ===== SUBBAR — شريط الفلتر الثابت تحت الـ navbar ===== -->
     <div class="subbar">
-        <form method="get" id="dateFilterForm">
-
-            <div class="subbar-group">
-                <label data-ar="شهر" data-en="Month">شهر</label>
-                <select name="month" id="quickMonth" class="subbar-select">
-                    <option value="" data-ar="-- أي شهر --" data-en="-- Any --">-- أي شهر --</option>
-                    <option value="1"  data-ar="يناير"  data-en="January">يناير</option>
-                    <option value="2"  data-ar="فبراير" data-en="February">فبراير</option>
-                    <option value="3"  data-ar="مارس"   data-en="March">مارس</option>
-                    <option value="4"  data-ar="أبريل"  data-en="April">أبريل</option>
-                    <option value="5"  data-ar="مايو"   data-en="May">مايو</option>
-                    <option value="6"  data-ar="يونيو"  data-en="June">يونيو</option>
-                    <option value="7"  data-ar="يوليو"  data-en="July">يوليو</option>
-                    <option value="8"  data-ar="أغسطس" data-en="August">أغسطس</option>
-                    <option value="9"  data-ar="سبتمبر" data-en="September">سبتمبر</option>
-                    <option value="10" data-ar="أكتوبر" data-en="October">أكتوبر</option>
-                    <option value="11" data-ar="نوفمبر" data-en="November">نوفمبر</option>
-                    <option value="12" data-ar="ديسمبر" data-en="December">ديسمبر</option>
-                </select>
-                <label data-ar="سنة" data-en="Year">سنة</label>
-                <select name="year" id="quickYear" class="subbar-select">
-                    <option value="" data-ar="-- أي سنة --" data-en="-- Any --">-- أي سنة --</option>
-                    <option value="2023">2023</option>
-                    <option value="2024">2024</option>
-                    <option value="2025">2025</option>
-                    <option value="2026">2026</option>
-                </select>
-            </div>
-
-            <div class="subbar-divider"></div>
-
-            <div class="subbar-group">
-                <label data-ar="من" data-en="From">من</label>
-                <input type="date" name="from" id="dateFrom" value="{{ request.GET.from }}">
-                <label data-ar="إلى" data-en="To">إلى</label>
-                <input type="date" name="to" id="dateTo" value="{{ request.GET.to }}">
-            </div>
-
+        <form method="get" id="dateFilterForm" style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">
+            <label data-ar="من" data-en="From">من</label>
+            <input type="date" name="from" value="{{ request.GET.from }}">
+            <label data-ar="إلى" data-en="To">إلى</label>
+            <input type="date" name="to" value="{{ request.GET.to }}">
             <button type="submit" class="btn-filter">
                 <i class="fa-solid fa-filter"></i>
-                <span data-ar="تطبيق" data-en="Apply">تطبيق</span>
+                <span data-ar="تصفية" data-en="Filter">تصفية</span>
             </button>
-
-            <button type="button" class="btn-filter btn-reset" onclick="resetFilter()" title="إعادة الضبط">
-                <i class="fa-solid fa-rotate-left"></i>
-            </button>
-
             {% if request.GET.search %}<input type="hidden" name="search" value="{{ request.GET.search }}">{% endif %}
             {% if request.GET.agent %}<input type="hidden" name="agent" value="{{ request.GET.agent }}">{% endif %}
             {% if request.GET.classification %}<input type="hidden" name="classification" value="{{ request.GET.classification }}">{% endif %}
+            {% if request.GET.month %}<input type="hidden" name="month" value="{{ request.GET.month }}">{% endif %}
+            {% if request.GET.year %}<input type="hidden" name="year" value="{{ request.GET.year }}">{% endif %}
         </form>
     </div>
-
-    <script>
-    (function () {
-        var qMonth   = document.getElementById('quickMonth');
-        var qYear    = document.getElementById('quickYear');
-        var dateFrom = document.getElementById('dateFrom');
-        var dateTo   = document.getElementById('dateTo');
-        var params   = new URLSearchParams(window.location.search);
-
-        var urlMonth = params.get('month');
-        var urlYear  = params.get('year');
-        var urlFrom  = params.get('from');
-        var urlTo    = params.get('to');
-
-        if (urlMonth) qMonth.value = urlMonth;
-        if (urlYear)  qYear.value  = urlYear;
-
-        if (!urlMonth && !urlYear && !urlFrom && !urlTo) {
-            var now = new Date();
-            qMonth.value = now.getMonth() + 1;
-            qYear.value  = now.getFullYear();
-        }
-
-        function onQuickChange() {
-            if (qMonth.value || qYear.value) {
-                dateFrom.value = '';
-                dateTo.value   = '';
-            }
-        }
-        function onDateChange() {
-            if (dateFrom.value || dateTo.value) {
-                qMonth.value = '';
-                qYear.value  = '';
-            }
-        }
-
-        qMonth.addEventListener('change', onQuickChange);
-        qYear.addEventListener('change', onQuickChange);
-        dateFrom.addEventListener('change', onDateChange);
-        dateTo.addEventListener('change', onDateChange);
-    })();
-
-    function resetFilter() {
-        var now = new Date();
-        document.getElementById('quickMonth').value = now.getMonth() + 1;
-        document.getElementById('quickYear').value  = now.getFullYear();
-        document.getElementById('dateFrom').value   = '';
-        document.getElementById('dateTo').value     = '';
-        document.getElementById('dateFilterForm').submit();
-    }
-    </script>
 
     <!-- ===== MAIN ===== -->
     <main class="main">
