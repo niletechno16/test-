@@ -116,8 +116,8 @@
     <form method="get" id="formMonthYear" class="filter-inputs">
       <input type="hidden" name="filter_mode" value="monthyear">
       {% if is_manager and filters.agent %}<input type="hidden" name="agent" value="{{ filters.agent }}">{% endif %}
-      {% if filters.classification %}<input type="hidden" name="classification" value="{{ filters.classification }}">{%
-      endif %}
+      {% if filters.classification %}<input type="hidden" name="classification" value="{{ filters.classification }}">
+      {%endif %}
       <label data-ar="الشهر" data-en="Month">الشهر</label>
       <input type="month" name="month_year" value="{{ filter_month_year|default:'' }}">
       <button type="submit" class="btn-apply-filter"><i class="fa-solid fa-filter"></i> <span data-ar="تطبيق"
@@ -152,7 +152,7 @@
     <select class="select-input" name="agent">
       <option value="" data-ar="كل دعم العملاء" data-en="All Support">كل دعم العملاء</option>
       {% for a in agents %}
-      <option value="{{ a }}" {% if filters.agent==a %}selected{% endif %}>{{ a }}</option>
+      <option value="{{ a }}" {% if filters.agent == a %}selected{% endif %}>{{ a }}</option>
       {% endfor %}
     </select>
     {% endif %}
