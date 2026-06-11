@@ -553,6 +553,35 @@
             border-color: var(--red) !important;
         }
 
+        .subbar-date-form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: nowrap;
+        }
+
+        .subbar-date-input {
+            padding: 4px 7px;
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            background: var(--surface2);
+            color: var(--text);
+            font-family: 'Cairo', sans-serif;
+            font-size: 11px;
+            outline: none;
+            color-scheme: dark;
+            cursor: pointer;
+            height: 28px;
+        }
+
+        body.light-mode .subbar-date-input {
+            color-scheme: light;
+        }
+
+        .subbar-date-input:focus {
+            border-color: var(--blue);
+        }
+
         /* ===== PAGE TITLE ===== */
         .page-title {
             font-size: 18px;
@@ -1213,6 +1242,12 @@
                 max-width: 100px;
             }
 
+            .subbar-date-input {
+                font-size: 10px;
+                padding: 4px 5px;
+                max-width: 105px;
+            }
+
             .subbar label {
                 display: inline;
                 font-size: 10px;
@@ -1501,6 +1536,30 @@
             {% if request.GET.agent %}<input type="hidden" name="agent" value="{{ request.GET.agent }}">{% endif %}
             {% if request.GET.classification %}<input type="hidden" name="classification" value="{{ request.GET.classification }}">{% endif %}
         </form>
+
+        <div class="subbar-divider"></div>
+
+        <!-- Date range filter — shared across all pages -->
+        <form method="get" id="subbarDateForm" class="subbar-date-form">
+            <div class="subbar-group">
+                <label data-ar="من" data-en="From">من</label>
+                <input type="date" name="from" id="subbarDateFrom" class="subbar-date-input">
+                <label data-ar="إلى" data-en="To">إلى</label>
+                <input type="date" name="to" id="subbarDateTo" class="subbar-date-input">
+            </div>
+            <button type="submit" class="btn-filter">
+                <i class="fa-solid fa-calendar-check"></i>
+                <span data-ar="تطبيق" data-en="Apply">تطبيق</span>
+            </button>
+            <button type="button" class="btn-filter btn-reset" onclick="resetDateFilter()" title="مسح التاريخ">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            {% if request.GET.month %}<input type="hidden" name="month" value="{{ request.GET.month }}">{% endif %}
+            {% if request.GET.year %}<input type="hidden" name="year" value="{{ request.GET.year }}">{% endif %}
+            {% if request.GET.search %}<input type="hidden" name="search" value="{{ request.GET.search }}">{% endif %}
+            {% if request.GET.agent %}<input type="hidden" name="agent" value="{{ request.GET.agent }}">{% endif %}
+            {% if request.GET.classification %}<input type="hidden" name="classification" value="{{ request.GET.classification }}">{% endif %}
+        </form>
     </div>
 
     <script>
@@ -1527,6 +1586,20 @@
         document.getElementById('quickMonth').value = now.getMonth() + 1;
         document.getElementById('quickYear').value  = now.getFullYear();
         document.getElementById('dateFilterForm').submit();
+    }
+
+    (function () {
+        var params = new URLSearchParams(window.location.search);
+        var fromVal = params.get('from');
+        var toVal   = params.get('to');
+        if (fromVal) document.getElementById('subbarDateFrom').value = fromVal;
+        if (toVal)   document.getElementById('subbarDateTo').value   = toVal;
+    })();
+
+    function resetDateFilter() {
+        document.getElementById('subbarDateFrom').value = '';
+        document.getElementById('subbarDateTo').value   = '';
+        document.getElementById('subbarDateForm').submit();
     }
     </script>
 

@@ -3,91 +3,6 @@
 
 {% block extra_css %}
 <style>
-    /* إخفاء الـ subbar كله في صفحة الداش بورد */
-    .subbar { display: none !important; }
-    .main   { margin-top: var(--navbar-h) !important; }
-
-    /* ===== header row: title + inline filter ===== */
-    .dash-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 20px;
-    }
-
-    .dash-header .page-title {
-        margin-bottom: 0;
-    }
-
-    .dash-date-filter {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 6px 12px;
-        flex-wrap: wrap;
-    }
-
-    .dash-date-filter label {
-        font-size: 12px;
-        color: var(--muted);
-        white-space: nowrap;
-    }
-
-    .dash-date-filter input[type="date"] {
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        color: var(--text);
-        font-size: 12px;
-        padding: 4px 8px;
-        height: 30px;
-        font-family: 'Cairo', sans-serif;
-    }
-
-    .dash-date-filter input[type="date"]:focus {
-        outline: none;
-        border-color: var(--accent);
-    }
-
-    .dash-date-filter .btn-apply {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        background: var(--accent);
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        padding: 5px 12px;
-        font-size: 12px;
-        font-family: 'Cairo', sans-serif;
-        cursor: pointer;
-        white-space: nowrap;
-        height: 30px;
-    }
-
-    .dash-date-filter .btn-apply:hover { background: #3b5fe8; }
-
-    .dash-date-filter .btn-reset {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        color: var(--muted);
-        width: 30px;
-        height: 30px;
-        cursor: pointer;
-        font-size: 13px;
-    }
-
-    .dash-date-filter .btn-reset:hover { color: var(--accent); border-color: var(--accent); }
-
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -191,24 +106,8 @@
 
 {% block content %}
 
-<!-- Header row: title + inline date filter -->
-<div class="dash-header">
-    <div class="page-title"><i class="fa-solid fa-house"></i> <span data-ar="لوحة التحكم" data-en="Dashboard">لوحة التحكم</span></div>
-
-    <form method="get" class="dash-date-filter" id="dashDateForm">
-        <label data-ar="من" data-en="From">من</label>
-        <input type="date" name="from" id="dashDateFrom" value="{{ date_from }}">
-        <label data-ar="إلى" data-en="To">إلى</label>
-        <input type="date" name="to" id="dashDateTo" value="{{ date_to }}">
-        <button type="submit" class="btn-apply">
-            <i class="fa-solid fa-filter"></i>
-            <span data-ar="تطبيق" data-en="Apply">تطبيق</span>
-        </button>
-        <button type="button" class="btn-reset" onclick="dashResetFilter()" title="إعادة الضبط">
-            <i class="fa-solid fa-rotate-left"></i>
-        </button>
-    </form>
-</div>
+<!-- Page title -->
+<div class="page-title"><i class="fa-solid fa-house"></i> <span data-ar="لوحة التحكم" data-en="Dashboard">لوحة التحكم</span></div>
 
 <div class="month-banner"><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لـ" data-en="Showing data for">البيانات المعروضة لـ</span> <strong>{{ month_label }}</strong></div>
 
@@ -498,14 +397,5 @@
         }
     });
 
-    function dashResetFilter() {
-        var today = new Date();
-        var y = today.getFullYear();
-        var m = String(today.getMonth() + 1).padStart(2, '0');
-        var lastDay = new Date(y, today.getMonth() + 1, 0).getDate();
-        document.getElementById('dashDateFrom').value = y + '-' + m + '-01';
-        document.getElementById('dashDateTo').value   = y + '-' + m + '-' + String(lastDay).padStart(2, '0');
-        document.getElementById('dashDateForm').submit();
-    }
 </script>
 {% endblock %}
