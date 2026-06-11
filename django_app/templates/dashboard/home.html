@@ -2,17 +2,7 @@
 {% block title %}الرئيسية{% endblock %}
 
 {% block extra_css %}
-<style>
-    /* إخفاء الـ subbar كله في صفحة الداش بورد */
-    .subbar {
-        display: none !important;
-    }
-
-    .main {
-        margin-top: var(--navbar-h) !important;
-    }
-
-    /* ===== header row: title + inline filter ===== */
+<style>    /* ===== header row: title + inline filter ===== */
     .dash-header {
         display: flex;
         align-items: center;
@@ -227,31 +217,36 @@
     <div class="smart-filter-wrap">
         <!-- Toggle buttons -->
         <div class="filter-mode-toggle">
-            <button type="button" id="btnModeMonthYear" class="active" onclick="switchFilterMode('monthyear')">شهر /
-                سنة</button>
-            <button type="button" id="btnModeExact" onclick="switchFilterMode('exact')">تاريخ محدد</button>
+            <button type="button" id="btnModeMonthYear" class="active" onclick="switchFilterMode('monthyear')">
+                <span data-ar="شهر / سنة" data-en="Month / Year">شهر / سنة</span>
+            </button>
+            <button type="button" id="btnModeExact" onclick="switchFilterMode('exact')">
+                <span data-ar="تاريخ محدد" data-en="Exact Date">تاريخ محدد</span>
+            </button>
         </div>
 
         <!-- Mode: شهر وسنة -->
         <form method="get" id="formMonthYear" class="filter-inputs">
             <input type="hidden" name="filter_mode" value="monthyear">
-            <label>الشهر</label>
+            <label data-ar="الشهر" data-en="Month">الشهر</label>
             <input type="month" name="month_year" id="inputMonthYear" value="{{ filter_month_year|default:'' }}"
                 style="height:30px;">
             <button type="submit" class="btn-apply-filter">
-                <i class="fa-solid fa-filter"></i> تطبيق
+                <i class="fa-solid fa-filter"></i>
+                <span data-ar="تطبيق" data-en="Apply">تطبيق</span>
             </button>
         </form>
 
         <!-- Mode: تاريخ محدد -->
         <form method="get" id="formExact" class="filter-inputs" style="display:none;">
             <input type="hidden" name="filter_mode" value="exact">
-            <label>من</label>
+            <label data-ar="من" data-en="From">من</label>
             <input type="date" name="from" id="dashDateFrom" value="{{ date_from }}">
-            <label>إلى</label>
+            <label data-ar="إلى" data-en="To">إلى</label>
             <input type="date" name="to" id="dashDateTo" value="{{ date_to }}">
             <button type="submit" class="btn-apply-filter">
-                <i class="fa-solid fa-filter"></i> تطبيق
+                <i class="fa-solid fa-filter"></i>
+                <span data-ar="تطبيق" data-en="Apply">تطبيق</span>
             </button>
         </form>
     </div>
@@ -556,12 +551,13 @@
         document.getElementById('formExact').style.display = isMonthYear ? 'none' : 'flex';
         document.getElementById('btnModeMonthYear').classList.toggle('active', isMonthYear);
         document.getElementById('btnModeExact').classList.toggle('active', !isMonthYear);
+        localStorage.setItem('dashFilterMode', mode);
     }
 
-    // On page load: restore active mode from current URL params
+    // On page load: restore active mode from URL params or localStorage
     (function () {
         var params = new URLSearchParams(window.location.search);
-        var mode = params.get('filter_mode') || 'monthyear';
+        var mode = params.get('filter_mode') || localStorage.getItem('dashFilterMode') || 'monthyear';
         switchFilterMode(mode);
     })();
 </script>
