@@ -91,55 +91,78 @@
         display: block;
         opacity: .4;
     }
+
+    /* ===== header row: title + inline date filter ===== */
+    .dash-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .dash-header .page-title { margin-bottom: 0; }
+    .dash-date-filter {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 6px 12px;
+        flex-wrap: wrap;
+    }
+    .dash-date-filter label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+    .dash-date-filter input[type="date"] {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 12px;
+        padding: 4px 8px;
+        height: 30px;
+        font-family: 'Cairo', sans-serif;
+        color-scheme: dark;
+    }
+    body.light-mode .dash-date-filter input[type="date"] { color-scheme: light; }
+    .dash-date-filter input[type="date"]:focus { outline: none; border-color: var(--accent); }
+    .dash-date-filter .btn-apply {
+        display: flex; align-items: center; gap: 5px;
+        background: var(--accent); color: #fff; border: none;
+        border-radius: 6px; padding: 5px 12px;
+        font-size: 12px; font-family: 'Cairo', sans-serif;
+        cursor: pointer; white-space: nowrap; height: 30px;
+    }
+    .dash-date-filter .btn-apply:hover { background: #3b5fe8; }
+    .dash-date-filter .btn-reset-date {
+        display: flex; align-items: center; justify-content: center;
+        background: var(--surface2); border: 1px solid var(--border);
+        border-radius: 6px; color: var(--muted);
+        width: 30px; height: 30px; cursor: pointer; font-size: 13px;
+    }
+    .dash-date-filter .btn-reset-date:hover { color: var(--accent); border-color: var(--accent); }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="page-title"><i class="fa-solid fa-headset"></i> <span data-ar="دعم العملاء" data-en="Customer Support">دعم العملاء</span></div>
+<!-- Header: title + date filter -->
+<div class="dash-header">
+    <div class="page-title"><i class="fa-solid fa-headset"></i> <span data-ar="دعم العملاء" data-en="Customer Support">دعم العملاء</span></div>
+    <form method="get" class="dash-date-filter" id="agentsDateForm">
+        <label data-ar="من" data-en="From">من</label>
+        <input type="date" name="from" id="agentsDateFormFrom" value="{{ date_from }}">
+        <label data-ar="إلى" data-en="To">إلى</label>
+        <input type="date" name="to" id="agentsDateFormTo" value="{{ date_to }}">
+        <button type="submit" class="btn-apply">
+            <i class="fa-solid fa-filter"></i>
+            <span data-ar="تطبيق" data-en="Apply">تطبيق</span>
+        </button>
+        <button type="button" class="btn-reset-date" onclick="agentsResetFilter()" title="إعادة الضبط">
+            <i class="fa-solid fa-rotate-left"></i>
+        </button>
+    </form>
+</div>
 <div class="month-banner"><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لـ" data-en="Showing data for">البيانات المعروضة لـ</span> <strong>{{ month_label }}</strong></div>
-
-<!-- Filters -->
-<form method="get">
-    <div class="filters-bar">
-        <input class="search-input" type="text" name="search" placeholder="ابحث عن أيجنت..." data-ar-placeholder="ابحث عن أيجنت..." data-en-placeholder="Search agent..." value="{{ search }}">
-        <div class="month-year-picker">
-          <select name="month" id="monthPicker" onchange="applyMonthYear()">
-            <option value="1"  {% if selected_month == 1  %}selected{% endif %}>يناير</option>
-            <option value="2"  {% if selected_month == 2  %}selected{% endif %}>فبراير</option>
-            <option value="3"  {% if selected_month == 3  %}selected{% endif %}>مارس</option>
-            <option value="4"  {% if selected_month == 4  %}selected{% endif %}>أبريل</option>
-            <option value="5"  {% if selected_month == 5  %}selected{% endif %}>مايو</option>
-            <option value="6"  {% if selected_month == 6  %}selected{% endif %}>يونيو</option>
-            <option value="7"  {% if selected_month == 7  %}selected{% endif %}>يوليو</option>
-            <option value="8"  {% if selected_month == 8  %}selected{% endif %}>أغسطس</option>
-            <option value="9"  {% if selected_month == 9  %}selected{% endif %}>سبتمبر</option>
-            <option value="10" {% if selected_month == 10 %}selected{% endif %}>أكتوبر</option>
-            <option value="11" {% if selected_month == 11 %}selected{% endif %}>نوفمبر</option>
-            <option value="12" {% if selected_month == 12 %}selected{% endif %}>ديسمبر</option>
-          </select>
-          <select name="year" id="yearPicker" onchange="applyMonthYear()">
-            {% for y in available_years %}
-            <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <input type="hidden" name="from" id="dateFrom" value="{{ date_from }}">
-        <input type="hidden" name="to"   id="dateTo"   value="{{ date_to }}">
-        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> <span data-ar="فلتر" data-en="Filter">فلتر</span></button>
-        <a href="{% url 'agents_list' %}" class="btn btn-ghost"><i class="fa-solid fa-xmark"></i> <span data-ar="مسح" data-en="Clear">مسح</span></a>
-    </div>
-</form>
-
-<script>
-function applyMonthYear() {
-  const month = parseInt(document.getElementById('monthPicker').value);
-  const year  = parseInt(document.getElementById('yearPicker').value);
-  const lastDay = new Date(year, month, 0).getDate();
-  const pad = n => String(n).padStart(2,'0');
-  document.getElementById('dateFrom').value = `${year}-${pad(month)}-01`;
-  document.getElementById('dateTo').value   = `${year}-${pad(month)}-${pad(lastDay)}`;
-}
-</script>
 
 <!-- Cards -->
 {% if agents %}
@@ -186,6 +209,16 @@ function applyMonthYear() {
 
 {% block extra_js %}
 <script>
+    function agentsResetFilter() {
+        var today = new Date();
+        var y = today.getFullYear();
+        var m = String(today.getMonth() + 1).padStart(2, '0');
+        var lastDay = new Date(y, today.getMonth() + 1, 0).getDate();
+        document.getElementById('agentsDateFormFrom').value = y + '-' + m + '-01';
+        document.getElementById('agentsDateFormTo').value   = y + '-' + m + '-' + String(lastDay).padStart(2, '0');
+        document.getElementById('agentsDateForm').submit();
+    }
+
     document.querySelector('input[name="search"]').addEventListener('input', function () {
         const val = this.value.toLowerCase();
         document.querySelectorAll('.agent-card').forEach(card => {
