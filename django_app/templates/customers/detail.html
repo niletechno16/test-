@@ -218,8 +218,7 @@
                         <span class="badge badge-yellow">{{ r.classification }}</span>
                         {% endif %}
                     </td>
-                    <td>{% if r.resolved_date %}{% with d=r.resolved_date|stringformat:"s" %}{{ d|slice:":4" }}-{{
-                        d|slice:"4:6" }}-{{ d|slice:"6:8" }}{% endwith %}{% endif %}</td>
+                    <td>{% if r.resolved_date %}{% with d=r.resolved_date|stringformat:"s" %}{{ d|slice:"6:8" }}/{{ d|slice:"4:6" }}/{{ d|slice:":4" }}{% endwith %}{% endif %}</td>
                     <td>{{ r.resolved_time }}</td>
                     <td>
                         {% if r.resolution_minutes %}
