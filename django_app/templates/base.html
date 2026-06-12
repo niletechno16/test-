@@ -1359,10 +1359,16 @@
                 document.querySelectorAll('[data-en]').forEach(el => {
                     el.textContent = el.getAttribute('data-en');
                 });
+                document.querySelectorAll('[data-en-placeholder]').forEach(el => {
+                    el.placeholder = el.getAttribute('data-en-placeholder');
+                });
             } else {
                 document.getElementById('langLabel').textContent = 'EN';
                 document.querySelectorAll('[data-ar]').forEach(el => {
                     el.textContent = el.getAttribute('data-ar');
+                });
+                document.querySelectorAll('[data-ar-placeholder]').forEach(el => {
+                    el.placeholder = el.getAttribute('data-ar-placeholder');
                 });
             }
             localStorage.setItem('ntLang', lang);

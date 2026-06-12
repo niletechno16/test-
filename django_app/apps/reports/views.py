@@ -63,6 +63,9 @@ def reports_list(request):
         if class_filter:
             data = [r for r in data if class_filter in r['classification']]
         data   = sorted(data, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
+        for r in data:
+            c = r.get('classification', '')
+            r['classification_type'] = 'resolved' if 'تم' in c and 'لم' not in c else ('unresolved' if 'لم يتم' in c else 'other')
         agents = list(set(r['agent_name'] for r in vdata['reports']))
         return render(request, 'reports/list.html', {
             'data': data, 'agents': agents, 'is_manager': True,
@@ -88,6 +91,9 @@ def reports_list(request):
 
     cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC, resolved_time DESC")
     data = cursor.fetchall()
+    for r in data:
+        c = r.get('classification', '') or ''
+        r['classification_type'] = 'resolved' if 'تم' in c and 'لم' not in c else ('unresolved' if 'لم يتم' in c else 'other')
 
     agents = []
     if is_manager_level(request.user):

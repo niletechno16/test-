@@ -419,7 +419,7 @@
                 },
     {
         label: 'غير محلول',
-            data: [{% for a in top_agents_resolved %} { { a.unresolved } } {% if not forloop.last %}, {% endif %} {% endfor %}],
+            data: [{% for a in top_agents_resolved %}{{ a.unresolved }}{% if not forloop.last %}, {% endif %}{% endfor %}],
     backgroundColor: 'rgba(239,68,68,0.75)',
         borderRadius: 6,
             borderSkipped: false,
