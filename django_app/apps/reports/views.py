@@ -62,10 +62,10 @@ def reports_list(request):
             data = [r for r in data if r['agent_name'] == agent_filter]
         if class_filter:
             data = [r for r in data if class_filter in r['classification']]
-        data   = sorted(data, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
+        data = sorted(data, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
         for r in data:
             c = r.get('classification', '')
-            r['classification_type'] = 'resolved' if 'تم' in c and 'لم' not in c else ('unresolved' if 'لم يتم' in c else 'other')
+            r['classification_type'] = 'resolved' if c.startswith('تم حل') else ('unresolved' if 'لم يتم' in c else 'other')
         agents = list(set(r['agent_name'] for r in vdata['reports']))
         return render(request, 'reports/list.html', {
             'data': data, 'agents': agents, 'is_manager': True,
@@ -93,7 +93,7 @@ def reports_list(request):
     data = cursor.fetchall()
     for r in data:
         c = r.get('classification', '') or ''
-        r['classification_type'] = 'resolved' if 'تم' in c and 'لم' not in c else ('unresolved' if 'لم يتم' in c else 'other')
+        r['classification_type'] = 'resolved' if c.startswith('تم حل') else ('unresolved' if 'لم يتم' in c else 'other')
 
     agents = []
     if is_manager_level(request.user):
@@ -149,7 +149,7 @@ def monthly(request):
 
     cursor.execute(f"""
         SELECT agent_name, COUNT(*) AS total,
-               SUM(CASE WHEN classification LIKE N'تم%' THEN 1 ELSE 0 END) AS resolved,
+               SUM(CASE WHEN classification LIKE N'تم حل%' THEN 1 ELSE 0 END) AS resolved,
                SUM(CASE WHEN classification LIKE N'لم يتم%' THEN 1 ELSE 0 END) AS unresolved
         FROM Customer_service_reports_by_A {where}
         GROUP BY agent_name ORDER BY total DESC
