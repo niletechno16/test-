@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from db_connection import get_connection, is_manager_level, get_role
 from visitor_data import get_visitor_data
 from datetime import date
+from collections import defaultdict
 import calendar
 
 ARABIC_MONTHS = {
@@ -43,6 +44,42 @@ def _resolve_filter(request, today):
     return date_from, date_to, month_label, filter_mode, filter_month_year
 
 
+def _filter_reports(reports, date_from, date_to):
+    df = int(date_from.replace('-', ''))
+    dt = int(date_to.replace('-', ''))
+    return [r for r in reports if df <= r['resolved_date'] <= dt]
+
+
+def _customers_from_reports(all_customers, filtered_reports):
+    """يحسب إحصائيات العملاء من الـ reports المفلترة."""
+    stats = defaultdict(lambda: {'total': 0, 'resolved': 0, 'unresolved': 0, 'mins': []})
+    for r in filtered_reports:
+        c = r['customer_name']
+        stats[c]['total'] += 1
+        if r['classification'].startswith('تم حل'):
+            stats[c]['resolved'] += 1
+        else:
+            stats[c]['unresolved'] += 1
+        if r.get('resolution_minutes'):
+            stats[c]['mins'].append(r['resolution_minutes'])
+
+    result = []
+    for customer in all_customers:
+        name = customer['customer_name']
+        s    = stats.get(name, {'total': 0, 'resolved': 0, 'unresolved': 0, 'mins': []})
+        mins = s['mins']
+        result.append({
+            'customer_id':            customer['customer_id'],
+            'customer_name':          name,
+            'customer_phone':         customer['customer_phone'],
+            'total_reports':          s['total'],
+            'resolved':               s['resolved'],
+            'unresolved':             s['unresolved'],
+            'avg_resolution_minutes': round(sum(mins)/len(mins)) if mins else None,
+        })
+    return sorted(result, key=lambda x: x['total_reports'], reverse=True)
+
+
 @login_required
 def customers_list(request):
     if get_role(request.user) != 'visitor' and not is_manager_level(request.user):
@@ -53,8 +90,9 @@ def customers_list(request):
     search = request.GET.get('search', '')
 
     if get_role(request.user) == 'visitor':
-        vdata = get_visitor_data(request)
-        customers = vdata['customers']
+        vdata            = get_visitor_data(request)
+        filtered_reports = _filter_reports(vdata['reports'], date_from, date_to)
+        customers        = _customers_from_reports(vdata['customers'], filtered_reports)
         if search:
             customers = [c for c in customers if search in c['customer_name'] or search in c['customer_phone']]
         return render(request, 'customers/index.html', {
@@ -72,15 +110,16 @@ def customers_list(request):
         search_clause = f" AND (c.customer_name LIKE N'%{search}%' OR c.customer_phone LIKE N'%{search}%')"
 
     query = f"""
-        SELECT c.*,
+        SELECT c.customer_id, c.customer_name, c.customer_phone,
                COUNT(r.id) AS total_reports,
-               SUM(CASE WHEN r.classification LIKE N'تم%' THEN 1 ELSE 0 END) AS resolved,
-               SUM(CASE WHEN r.classification LIKE N'لم يتم%' THEN 1 ELSE 0 END) AS unresolved
+               SUM(CASE WHEN r.classification LIKE N'تم حل%' THEN 1 ELSE 0 END) AS resolved,
+               SUM(CASE WHEN r.classification LIKE N'لم يتم%' THEN 1 ELSE 0 END) AS unresolved,
+               AVG(CAST(r.resolution_minutes AS FLOAT)) AS avg_resolution_minutes
         FROM customer_detail_by_A c
         LEFT JOIN Customer_service_reports_by_A r
                ON c.customer_id = r.customer_id
-               AND r.resolved_date >= {date_from.replace('-','') if date_from else '0'}
-               AND r.resolved_date <= {date_to.replace('-','') if date_to else '99999999'}
+               AND r.resolved_date >= {date_from.replace('-','')}
+               AND r.resolved_date <= {date_to.replace('-','')}
         WHERE 1=1{search_clause}
         GROUP BY c.customer_id, c.customer_name, c.customer_phone
         ORDER BY total_reports DESC
@@ -108,11 +147,10 @@ def customer_detail(request, customer_id):
     if get_role(request.user) == 'visitor':
         vdata    = get_visitor_data(request)
         customer = next((c for c in vdata['customers'] if c['customer_id'] == customer_id), None)
-        reports  = [r for r in vdata['reports'] if r['customer_name'] == customer['customer_name']]
-        if date_from:
-            reports = [r for r in reports if r['resolved_date'] >= int(date_from.replace('-', ''))]
-        if date_to:
-            reports = [r for r in reports if r['resolved_date'] <= int(date_to.replace('-', ''))]
+        reports  = _filter_reports(
+            [r for r in vdata['reports'] if r['customer_name'] == customer['customer_name']],
+            date_from, date_to
+        )
         reports = sorted(reports, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
         return render(request, 'customers/detail.html', {
             'customer': customer, 'reports': reports, 'is_manager': True,
@@ -132,6 +170,7 @@ def customer_detail(request, customer_id):
         where += f" AND resolved_date >= {date_from.replace('-', '')}"
     if date_to:
         where += f" AND resolved_date <= {date_to.replace('-', '')}"
+
     cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC, resolved_time DESC")
     reports = cursor.fetchall()
     conn.close()
