@@ -173,27 +173,35 @@ def home(request):
         conn   = get_connection()
         cursor = conn.cursor(as_dict=True)
 
+        # ── الكروت من الـ procedure ──
+        try:
+            cursor.execute(
+                "EXEC sp_DashboardCard_bya @FromDate = %s, @ToDate = %s",
+                (date_from, date_to)
+            )
+            card_row = cursor.fetchone()
+            cursor.nextset()
+        except Exception:
+            card_row = None
+
+        if card_row:
+            total_reports        = card_row.get('TotalConversations', 0) or 0
+            total_resolved       = card_row.get('Resolved',           0) or 0
+            total_unresolved     = card_row.get('Unresolved',         0) or 0
+            total_customers      = card_row.get('TotalCustomers',     0) or 0
+            avg_resolution_overall = round(card_row.get('AvgResolutionMinutes', 0) or 0)
+        else:
+            total_reports = total_resolved = total_unresolved = total_customers = avg_resolution_overall = 0
+
+        resolved_pct   = round(total_resolved   / total_reports * 100) if total_reports else 0
+        unresolved_pct = round(total_unresolved / total_reports * 100) if total_reports else 0
+
         df_int = _date_int(date_from)
         dt_int = _date_int(date_to)
 
         where = f"WHERE resolved_date BETWEEN {df_int} AND {dt_int}"
         if not is_manager_level(request.user):
-            where += f" AND agent_name = '{request.user.first_name or request.user.username}'"
-
-        cursor.execute(f"SELECT COUNT(*) AS total FROM Customer_service_reports_by_A {where}")
-        total_reports = cursor.fetchone()['total']
-
-        cursor.execute(f"SELECT COUNT(*) AS total FROM Customer_service_reports_by_A {where} AND classification LIKE N'تم حل%'")
-        total_resolved = cursor.fetchone()['total']
-
-        cursor.execute(f"SELECT COUNT(*) AS total FROM Customer_service_reports_by_A {where} AND classification LIKE N'لم يتم%'")
-        total_unresolved = cursor.fetchone()['total']
-
-        cursor.execute("SELECT COUNT(*) AS total FROM customer_detail_by_A")
-        total_customers = cursor.fetchone()['total']
-
-        resolved_pct   = round(total_resolved   / total_reports * 100) if total_reports else 0
-        unresolved_pct = round(total_unresolved / total_reports * 100) if total_reports else 0
+            where += f" AND agent_name = '{request.user.first_name or request.user.username}'" 
 
         cursor.execute(f"""
             SELECT TOP 5 agent_name,
@@ -218,14 +226,6 @@ def home(request):
             GROUP BY classification ORDER BY total DESC
         """)
         common_problems = cursor.fetchall()
-
-        cursor.execute(f"""
-            SELECT AVG(CAST(resolution_minutes AS FLOAT)) AS avg_mins
-            FROM Customer_service_reports_by_A {where}
-            AND resolution_minutes IS NOT NULL
-        """)
-        row = cursor.fetchone()
-        avg_resolution_overall = round(row['avg_mins']) if row and row['avg_mins'] else 0
 
         cursor.execute(f"""
             SELECT TOP 8 agent_name AS name,
