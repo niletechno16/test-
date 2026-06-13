@@ -16,6 +16,19 @@
         margin-bottom: 0;
     }
 
+    .dash-welcome {
+        font-size: 14px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .dash-welcome strong {
+        color: var(--text);
+        font-weight: 700;
+    }
+
     /* ===== Smart Filter (next to month banner) ===== */
     .smart-filter-wrap {
         display: flex;
@@ -202,10 +215,16 @@
 
 {% block content %}
 
-<!-- Header row: title only -->
+<!-- Header row: title + welcome -->
 <div class="dash-header">
-    <div class="page-title"><i class="fa-solid fa-house"></i> <span data-ar="لوحة التحكم" data-en="Dashboard">لوحة
-            التحكم</span></div>
+    <div class="page-title"><i class="fa-solid fa-house"></i> <span data-ar="لوحة التحكم" data-en="Dashboard">لوحة التحكم</span></div>
+    <div class="dash-welcome">
+        {% if request.user.profile.role == 'visitor' %}
+            👋 <span data-ar="أهلاً بك، Guest" data-en="Welcome, Guest">أهلاً بك، <strong>Guest</strong></span>
+        {% else %}
+            👋 <span data-ar="أهلاً بك، {{ request.user.profile.full_name|default:request.user.first_name|default:request.user.username }}" data-en="Welcome, {{ request.user.profile.full_name|default:request.user.first_name|default:request.user.username }}">أهلاً بك، <strong>{{ request.user.profile.full_name|default:request.user.first_name|default:request.user.username }}</strong></span>
+        {% endif %}
+    </div>
 </div>
 
 <!-- Month banner + smart filter -->

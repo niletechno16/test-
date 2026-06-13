@@ -1245,27 +1245,6 @@
                 max-width: 100%;
             }
         }
-        /* ===== NAVBAR WELCOME ===== */
-        .navbar-welcome {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            color: var(--muted);
-            white-space: nowrap;
-            pointer-events: none;
-        }
-        .navbar-welcome strong {
-            color: var(--text);
-            font-weight: 700;
-        }
-        @media (max-width: 767px) {
-            .navbar-welcome { display: none; }
-        }
-
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -1313,25 +1292,11 @@
 
     <!-- ===== NAVBAR - نفس لون خلفية الصفحة ===== -->
     <nav class="navbar">
-        <div class="navbar-left" style="display:flex;align-items:center;gap:10px;flex:1;">
+        <div class="navbar-left" style="display:flex;align-items:center;gap:10px;">
             <button class="menu-toggle" id="menuToggle" onclick="openSidebar()">
                 <i class="fa-solid fa-bars"></i>
             </button>
             <span class="page-breadcrumb" id="pageBreadcrumb">{% block page_title %}{% endblock %}</span>
-        </div>
-
-        <!-- ── Welcome greeting (center/right of left section) ── -->
-        <div class="navbar-welcome" id="navWelcome">
-            <span class="welcome-ar"
-                  data-ar="أهلاً بك، {% if request.user.profile.role == 'visitor' %}Guest{% else %}{{ request.user.profile.full_name|default:request.user.first_name|default:request.user.username }}{% endif %}"
-                  data-en="Welcome, {% if request.user.profile.role == 'visitor' %}Guest{% else %}{{ request.user.profile.full_name|default:request.user.first_name|default:request.user.username }}{% endif %}">
-                أهلاً بك،
-                <strong>
-                  {% if request.user.profile.role == 'visitor' %}Guest
-                  {% else %}{{ request.user.profile.full_name|default:request.user.first_name|default:request.user.username }}
-                  {% endif %}
-                </strong>
-            </span>
         </div>
 
         <div class="navbar-right">
