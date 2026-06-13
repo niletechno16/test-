@@ -51,7 +51,6 @@ def _date_int(date_str):
 
 
 def _empty_context():
-    """بيرجع context فاضي بأصفار لو فيه مشكلة في DB"""
     return {
         'total_reports':           0,
         'total_resolved':          0,
@@ -176,13 +175,13 @@ def home(request):
         conn   = get_connection()
         cursor = conn.cursor(as_dict=True)
 
+        # ── 1. الكروت ──
         cursor.execute(
             "EXEC sp_DashboardCard_bya @FromDate = %s, @ToDate = %s",
             (date_from, date_to)
         )
         card_row = cursor.fetchone()
         cursor.nextset()
-        conn.close()
 
         if card_row:
             total_reports          = card_row.get('TotalConversations',    0) or 0
@@ -196,13 +195,23 @@ def home(request):
         resolved_pct   = round(total_resolved   / total_reports * 100) if total_reports else 0
         unresolved_pct = round(total_unresolved / total_reports * 100) if total_reports else 0
 
+        # ── 2. Top Agents ──
+        cursor.execute(
+            "EXEC Top_Agent_resolved_byA @FromDate = %s, @ToDate = %s",
+            (date_from, date_to)
+        )
+        top_agents_resolved = cursor.fetchall() or []
+        cursor.nextset()
+
+        conn.close()
+
         return render(request, 'dashboard/home.html', {
             **base_ctx,
             'total_reports':           total_reports,
             'total_resolved':          total_resolved,
             'total_unresolved':        total_unresolved,
             'total_customers':         total_customers,
-            'top_agents_resolved':     [],
+            'top_agents_resolved':     top_agents_resolved,
             'top_customers':           [],
             'common_problems':         [],
             'resolved_pct':            resolved_pct,
