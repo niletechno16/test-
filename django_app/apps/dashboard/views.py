@@ -4,6 +4,9 @@ from db_connection import get_connection, is_manager_level, get_role
 from visitor_data import get_visitor_data
 from datetime import date
 import calendar
+import logging
+
+logger = logging.getLogger(__name__)
 
 ARABIC_MONTHS = {
     1:'يناير',2:'فبراير',3:'مارس',4:'أبريل',5:'مايو',6:'يونيو',
@@ -173,22 +176,19 @@ def home(request):
         conn   = get_connection()
         cursor = conn.cursor(as_dict=True)
 
-        # ── الكروت من الـ procedure ──
-        try:
-            cursor.execute(
-                "EXEC sp_DashboardCard_bya @FromDate = %s, @ToDate = %s",
-                (date_from, date_to)
-            )
-            card_row = cursor.fetchone()
-            cursor.nextset()
-        except Exception:
-            card_row = None
+        cursor.execute(
+            "EXEC sp_DashboardCard_bya @FromDate = %s, @ToDate = %s",
+            (date_from, date_to)
+        )
+        card_row = cursor.fetchone()
+        cursor.nextset()
+        conn.close()
 
         if card_row:
-            total_reports        = card_row.get('TotalConversations', 0) or 0
-            total_resolved       = card_row.get('Resolved',           0) or 0
-            total_unresolved     = card_row.get('Unresolved',         0) or 0
-            total_customers      = card_row.get('TotalCustomers',     0) or 0
+            total_reports          = card_row.get('TotalConversations',    0) or 0
+            total_resolved         = card_row.get('Resolved',              0) or 0
+            total_unresolved       = card_row.get('Unresolved',            0) or 0
+            total_customers        = card_row.get('TotalCustomers',        0) or 0
             avg_resolution_overall = round(card_row.get('AvgResolutionMinutes', 0) or 0)
         else:
             total_reports = total_resolved = total_unresolved = total_customers = avg_resolution_overall = 0
@@ -196,76 +196,22 @@ def home(request):
         resolved_pct   = round(total_resolved   / total_reports * 100) if total_reports else 0
         unresolved_pct = round(total_unresolved / total_reports * 100) if total_reports else 0
 
-        df_int = _date_int(date_from)
-        dt_int = _date_int(date_to)
-
-        where = f"WHERE resolved_date BETWEEN {df_int} AND {dt_int}"
-        if not is_manager_level(request.user):
-            where += f" AND agent_name = '{request.user.first_name or request.user.username}'" 
-
-        cursor.execute(f"""
-            SELECT TOP 5 agent_name,
-                   COUNT(*) AS total,
-                   SUM(CASE WHEN classification LIKE N'تم حل%' THEN 1 ELSE 0 END) AS resolved,
-                   SUM(CASE WHEN classification LIKE N'لم يتم%' THEN 1 ELSE 0 END) AS unresolved
-            FROM Customer_service_reports_by_A {where}
-            GROUP BY agent_name ORDER BY total DESC
-        """)
-        top_agents_resolved = cursor.fetchall()
-
-        cursor.execute(f"""
-            SELECT TOP 5 customer_name, COUNT(*) AS total
-            FROM Customer_service_reports_by_A {where}
-            GROUP BY customer_name ORDER BY total DESC
-        """)
-        top_customers = cursor.fetchall()
-
-        cursor.execute(f"""
-            SELECT TOP 5 classification, COUNT(*) AS total
-            FROM Customer_service_reports_by_A {where}
-            GROUP BY classification ORDER BY total DESC
-        """)
-        common_problems = cursor.fetchall()
-
-        cursor.execute(f"""
-            SELECT TOP 8 agent_name AS name,
-                   AVG(CAST(resolution_minutes AS FLOAT)) AS avg
-            FROM Customer_service_reports_by_A {where}
-            AND resolution_minutes IS NOT NULL
-            GROUP BY agent_name ORDER BY avg DESC
-        """)
-        avg_resolution_by_agent = [
-            {'name': r['name'], 'avg': round(r['avg'])} for r in cursor.fetchall()
-        ]
-
-        cursor.execute(f"""
-            SELECT resolved_date, COUNT(*) AS cnt
-            FROM Customer_service_reports_by_A {where}
-            GROUP BY resolved_date ORDER BY resolved_date
-        """)
-        traffic_by_date = []
-        for r in cursor.fetchall():
-            d_str = str(r['resolved_date'])
-            label = f"{d_str[6:8]}/{d_str[4:6]}/{d_str[:4]}"
-            traffic_by_date.append({'date': label, 'count': r['cnt']})
-
-        conn.close()
-
         return render(request, 'dashboard/home.html', {
             **base_ctx,
             'total_reports':           total_reports,
             'total_resolved':          total_resolved,
             'total_unresolved':        total_unresolved,
             'total_customers':         total_customers,
-            'top_agents_resolved':     top_agents_resolved,
-            'top_customers':           top_customers,
-            'common_problems':         common_problems,
+            'top_agents_resolved':     [],
+            'top_customers':           [],
+            'common_problems':         [],
             'resolved_pct':            resolved_pct,
             'unresolved_pct':          unresolved_pct,
-            'traffic_by_date':         traffic_by_date,
+            'traffic_by_date':         [],
             'avg_resolution_overall':  avg_resolution_overall,
-            'avg_resolution_by_agent': avg_resolution_by_agent,
+            'avg_resolution_by_agent': [],
         })
 
-    except Exception:
+    except Exception as e:
+        logger.error("Dashboard DB error: %s", e, exc_info=True)
         return render(request, 'dashboard/home.html', {**base_ctx, **_empty_context()})
