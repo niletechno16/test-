@@ -212,6 +212,21 @@ def home(request):
         ]
         cursor.nextset()
 
+        # ── 3. Top Customers ──
+        cursor.execute(
+            "EXEC Top_Customer_byA @FromDate = %s, @ToDate = %s",
+            (date_from, date_to)
+        )
+        raw_customers = cursor.fetchall() or []
+        top_customers = [
+            {
+                'customer_name': r.get('customer_name', ''),
+                'total':         r.get('TotalContacts',  0) or 0,
+            }
+            for r in raw_customers
+        ]
+        cursor.nextset()
+
         conn.close()
 
         return render(request, 'dashboard/home.html', {
@@ -221,7 +236,7 @@ def home(request):
             'total_unresolved':        total_unresolved,
             'total_customers':         total_customers,
             'top_agents_resolved':     top_agents_resolved,
-            'top_customers':           [],
+            'top_customers':           top_customers,
             'common_problems':         [],
             'resolved_pct':            resolved_pct,
             'unresolved_pct':          unresolved_pct,
