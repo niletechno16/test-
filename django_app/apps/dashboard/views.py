@@ -227,6 +227,21 @@ def home(request):
         ]
         cursor.nextset()
 
+        # ── 4. Most Common Issues ──
+        cursor.execute(
+            "EXEC Top_Common_Issues_byA @FromDate = %s, @ToDate = %s",
+            (date_from, date_to)
+        )
+        raw_issues = cursor.fetchall() or []
+        common_problems = [
+            {
+                'classification': r.get('category_name', ''),
+                'total':          r.get('TotalIssues',   0) or 0,
+            }
+            for r in raw_issues
+        ]
+        cursor.nextset()
+
         conn.close()
 
         return render(request, 'dashboard/home.html', {
@@ -237,7 +252,7 @@ def home(request):
             'total_customers':         total_customers,
             'top_agents_resolved':     top_agents_resolved,
             'top_customers':           top_customers,
-            'common_problems':         [],
+            'common_problems':         common_problems,
             'resolved_pct':            resolved_pct,
             'unresolved_pct':          unresolved_pct,
             'traffic_by_date':         [],
