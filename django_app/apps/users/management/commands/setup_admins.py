@@ -15,7 +15,7 @@ class Command(BaseCommand):
             conn   = get_connection()
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT username, user_phone FROM users_Details_byA WHERE users_id = %s",
+                "SELECT user_name, phone FROM users_Details_byA WHERE user_id = %s",
                 (uid,)
             )
             row = cursor.fetchone()
@@ -29,12 +29,12 @@ class Command(BaseCommand):
         return uid, None
 
     def save_hash_to_db(self, uid, pwd_hash):
-        """يحفظ الـ password hash في user_phone"""
+        """يحفظ الـ password hash في phone"""
         try:
             conn   = get_connection()
             cursor = conn.cursor()
             cursor.execute(
-                "UPDATE users_Details_byA SET user_phone = %s WHERE users_id = %s",
+                "UPDATE users_Details_byA SET phone = %s WHERE user_id = %s",
                 (pwd_hash, uid)
             )
             conn.commit()
@@ -75,7 +75,7 @@ class Command(BaseCommand):
             # لو مش موجود — أنشئه
             if pwd_hash and is_password_usable(pwd_hash):
                 # استخدم الـ hash المحفوظ
-                new_user          = User(username=uid, first_name=full_name)
+                new_user          = User(user_name=uid, first_name=full_name)
                 new_user.password = pwd_hash
                 new_user.save()
                 is_first = False
@@ -83,7 +83,7 @@ class Command(BaseCommand):
             else:
                 # أول مرة — باسورد = ID وحفظ الـ hash في SQL
                 new_user = User.objects.create_user(
-                    username=uid, password=uid, first_name=full_name
+                    user_name=uid, password=uid, first_name=full_name
                 )
                 self.save_hash_to_db(uid, new_user.password)
                 is_first = True

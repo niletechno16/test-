@@ -120,7 +120,7 @@ def change_password(request):
                 conn   = get_connection()
                 cursor = conn.cursor()
                 cursor.execute(
-                    "UPDATE users_Details_byA SET user_phone = %s WHERE users_id = %s",
+                    "UPDATE users_Details_byA SET phone = %s WHERE user_id = %s",
                     (request.user.password, request.user.profile.agent_id)
                 )
                 conn.commit()
@@ -159,7 +159,7 @@ def manage_users(request):
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT users_id, name
+            SELECT user_id, name
             FROM users_Details_byA
             WHERE user_type = 2
         """)

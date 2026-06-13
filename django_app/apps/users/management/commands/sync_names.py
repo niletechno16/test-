@@ -11,7 +11,7 @@ class Command(BaseCommand):
         try:
             conn   = get_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT users_id, username, user_phone FROM users_Details_byA")
+            cursor.execute("SELECT user_id, user_name, phone FROM users_Details_byA")
             rows = {
                 str(row[0]).strip(): {
                     'name': row[1].strip() if row[1] else '',
