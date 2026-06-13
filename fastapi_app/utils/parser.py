@@ -1,22 +1,27 @@
 def parse_ai_result(raw_text):
-    summary = ""
-    classification = ""
+    prob_type = 0
+    problem   = ""
+    category  = ""
+    summary   = ""
     try:
         for line in raw_text.splitlines():
             line = line.strip()
-            if line.startswith("الخلاصة:"):
-                summary = line.replace("الخلاصة:", "").strip()
+            if line.startswith("النوع:"):
+                val = line.replace("النوع:", "").strip()
+                prob_type = 1 if val == "1" else 0
+            elif line.startswith("المشكلة:"):
+                problem = line.replace("المشكلة:", "").strip()
             elif line.startswith("التصنيف:"):
-                classification = line.replace("التصنيف:", "").strip()
+                category = line.replace("التصنيف:", "").strip()
             elif line.startswith("الملخص:"):
                 summary = line.replace("الملخص:", "").strip()
     except Exception:
-        summary = raw_text
-        classification = "غير محدد"
+        problem  = raw_text
+        category = "غير محدد"
+        summary  = raw_text
 
-    if not summary:
-        summary = raw_text
-    if not classification:
-        classification = "غير محدد"
+    if not problem:  problem  = raw_text
+    if not category: category = "غير محدد"
+    if not summary:  summary  = problem
 
-    return summary, classification
+    return prob_type, problem, category, summary

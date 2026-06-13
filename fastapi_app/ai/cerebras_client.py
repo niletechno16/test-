@@ -8,12 +8,12 @@ def try_cerebras(prompt):
             continue
         try:
             print(f"🔄 Cerebras key {i}/{len(CEREBRAS_API_KEYS)}...")
-            client = Cerebras(api_key=key)
+            client   = Cerebras(api_key=key)
             response = client.chat.completions.create(
-                model="llama-3.3-70b",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=500,
-                temperature=0.3
+                model       = "llama-3.3-70b",
+                messages    = [{"role": "user", "content": prompt}],
+                max_tokens  = 1000,
+                temperature = 0.3
             )
             result = response.choices[0].message.content.strip()
             print(f"✅ Cerebras key {i} success")

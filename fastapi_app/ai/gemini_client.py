@@ -9,9 +9,9 @@ def try_gemini(prompt):
         try:
             print(f"🔄 Gemini key {i}/{len(GEMINI_API_KEYS)}...")
             genai.configure(api_key=key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model    = genai.GenerativeModel("gemini-1.5-flash")
             response = model.generate_content(prompt)
-            result = response.text.strip()
+            result   = response.text.strip()
             print(f"✅ Gemini key {i} success")
             return result
         except Exception as e:

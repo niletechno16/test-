@@ -8,12 +8,12 @@ def try_groq(prompt):
             continue
         try:
             print(f"🔄 Groq key {i}/{len(GROQ_API_KEYS)}...")
-            client = Groq(api_key=key)
+            client   = Groq(api_key=key)
             response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=500,
-                temperature=0.3
+                model       = "llama-3.3-70b-versatile",
+                messages    = [{"role": "user", "content": prompt}],
+                max_tokens  = 1000,
+                temperature = 0.3
             )
             result = response.choices[0].message.content.strip()
             print(f"✅ Groq key {i} success")

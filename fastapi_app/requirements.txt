@@ -1,8 +1,7 @@
 fastapi
 uvicorn
 requests
-arabic-reshaper
-python-bidi
+httpx
 groq
 google-generativeai
 cerebras-cloud-sdk

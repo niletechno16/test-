@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from .models import UserProfile
+from db_connection import get_connection
 
 
 # ---------------- ROLES ----------------
@@ -39,7 +40,6 @@ def login_view(request):
                 visitor_user.set_password('visitor123')
                 visitor_user.save()
 
-            # تأكد إن الـ profile موجود
             profile, profile_created = UserProfile.objects.get_or_create(
                 user=visitor_user,
                 defaults={
@@ -48,7 +48,6 @@ def login_view(request):
                     'is_first_login': False,
                 }
             )
-            # لو الـ profile موجود بس الـ role مش visitor
             if not profile_created and profile.role != 'visitor':
                 profile.role = 'visitor'
                 profile.save()
@@ -64,7 +63,7 @@ def login_view(request):
 
         if not user:
             try:
-                profile = UserProfile.objects.get(agent_id=int(username))
+                profile = UserProfile.objects.get(agent_id=username)
                 user = authenticate(request, username=profile.user.username, password=password)
             except (UserProfile.DoesNotExist, ValueError):
                 pass
@@ -80,43 +79,46 @@ def login_view(request):
     return render(request, 'users/login.html')
 
 
-# ---------------- CHANGE PASSWORD ----------------
+# ---------------- CHANGE PASSWORD (first login) ----------------
 @login_required
 def change_password(request):
     if request.method == 'POST':
-        new_username = request.POST.get('new_username', '').strip()
         new_password = request.POST.get('new_password', '').strip()
         confirm      = request.POST.get('confirm_password', '').strip()
+        email        = request.POST.get('email', '').strip()
 
         error = False
 
-        if new_username and new_username != request.user.username:
-            if User.objects.filter(username=new_username).exists():
-                messages.error(request, 'اسم المستخدم مستخدم بالفعل')
-                error = True
-            else:
-                request.user.username = new_username
-                request.user.save()
+        if new_password != confirm:
+            messages.error(request, 'كلمات المرور غير متطابقة')
+            error = True
+        elif len(new_password) < 6:
+            messages.error(request, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل')
+            error = True
 
         if not error:
-            if new_password != confirm:
-                messages.error(request, 'كلمات المرور غير متطابقة')
-                error = True
-            elif len(new_password) < 6:
-                messages.error(request, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل')
-                error = True
-
-        if not error:
+            # حفظ الباسورد
             request.user.set_password(new_password)
+
+            # حفظ الإيميل لو اتحط
+            if email:
+                if User.objects.filter(email=email).exclude(pk=request.user.pk).exists():
+                    messages.error(request, 'هذا الإيميل مستخدم بالفعل')
+                    error = True
+                else:
+                    request.user.email = email
+
+        if not error:
             request.user.save()
             request.user.profile.is_first_login = False
             request.user.profile.save()
             update_session_auth_hash(request, request.user)
+            messages.success(request, 'تم تغيير كلمة المرور بنجاح')
             return redirect('home')
 
     return render(request, 'users/change_password.html', {
-        'current_username': request.user.username,
-        'agent_id': request.user.profile.agent_id,
+        'agent_id':  request.user.profile.agent_id,
+        'full_name': request.user.profile.full_name or request.user.first_name,
     })
 
 
@@ -136,33 +138,68 @@ def manage_users(request):
     if not is_high_level(request.user):
         return redirect('home')
 
-    profiles = UserProfile.objects.select_related('user').exclude(role='visitor')
+    # ── جيب الـ IDs اللي user_type = 2 من SQL Server ──
+    sql_users = []
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT users_id, name
+            FROM users_Details_byA
+            WHERE user_type = 2
+        """)
+        rows = cursor.fetchall()
+        conn.close()
 
+        # اللي مسجلين في Django بالفعل
+        registered_ids = set(
+            UserProfile.objects.exclude(role='visitor')
+                               .values_list('agent_id', flat=True)
+        )
+
+        for row in rows:
+            uid  = str(row[0]).strip()
+            name = row[1].strip() if row[1] else uid
+            sql_users.append({
+                'id':           uid,
+                'name':         name,
+                'is_registered': uid in registered_ids,
+            })
+
+    except Exception as e:
+        messages.error(request, f'خطأ في الاتصال بقاعدة البيانات: {e}')
+
+    # ── إضافة يوزر من القائمة ──
     if request.method == 'POST':
-        agent_id = request.POST.get('agent_id', '').strip()
-        name     = request.POST.get('name', '').strip()
-        role     = request.POST.get('role', 'agent')
-        phone    = request.POST.get('phone', '').strip()
+        agent_id  = request.POST.get('agent_id', '').strip()
+        full_name = request.POST.get('full_name', '').strip()
+        role      = request.POST.get('role', 'agent')
 
-        if UserProfile.objects.filter(agent_id=agent_id).exists():
-            messages.error(request, 'هذا الـ Agent ID مسجل بالفعل')
+        if not agent_id:
+            messages.error(request, 'الـ ID مطلوب')
+        elif UserProfile.objects.filter(agent_id=agent_id).exists():
+            messages.error(request, 'هذا الـ ID مسجل بالفعل')
         else:
-            user = User.objects.create_user(
+            new_user = User.objects.create_user(
                 username=str(agent_id),
                 password=str(agent_id),
-                first_name=name
+                first_name=full_name,
             )
             UserProfile.objects.create(
-                user=user,
-                phone_number=phone or agent_id,
-                agent_id=int(agent_id),
+                user=new_user,
+                agent_id=agent_id,
+                full_name=full_name,
                 role=role,
-                is_first_login=True
+                is_first_login=True,
             )
-            messages.success(request, f'تم إضافة {name} — الـ ID: {agent_id} — الباسورد المؤقت: {agent_id}')
+            messages.success(request, f'✅ تم تسجيل {full_name} — ID: {agent_id} — الباسورد المؤقت: {agent_id}')
+            return redirect('manage_users')
+
+    profiles = UserProfile.objects.select_related('user').exclude(role='visitor')
 
     return render(request, 'users/manage.html', {
         'profiles':     profiles,
+        'sql_users':    sql_users,
         'is_manager':   True,
         'role_choices': UserProfile.ROLE_CHOICES,
     })
