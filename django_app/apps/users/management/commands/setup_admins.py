@@ -75,7 +75,7 @@ class Command(BaseCommand):
             # لو مش موجود — أنشئه
             if pwd_hash and is_password_usable(pwd_hash):
                 # استخدم الـ hash المحفوظ
-                new_user          = User(user_name=uid, first_name=full_name)
+                new_user          = User(username=uid, first_name=full_name)
                 new_user.password = pwd_hash
                 new_user.save()
                 is_first = False
@@ -83,7 +83,7 @@ class Command(BaseCommand):
             else:
                 # أول مرة — باسورد = ID وحفظ الـ hash في SQL
                 new_user = User.objects.create_user(
-                    user_name=uid, password=uid, first_name=full_name
+                    username=uid, password=uid, first_name=full_name
                 )
                 self.save_hash_to_db(uid, new_user.password)
                 is_first = True
