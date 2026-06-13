@@ -56,7 +56,7 @@ def login_view(request):
             return redirect('home')
 
         # دخول عادي
-        username = request.POST.get('username', '').strip()
+        username = (request.POST.get('username') or request.POST.get('agent_id', '')).strip()
         password = request.POST.get('password', '').strip()
 
         user = authenticate(request, username=username, password=password)
