@@ -200,7 +200,16 @@ def home(request):
             "EXEC Top_Agent_resolved_byA @FromDate = %s, @ToDate = %s",
             (date_from, date_to)
         )
-        top_agents_resolved = cursor.fetchall() or []
+        raw_agents = cursor.fetchall() or []
+        top_agents_resolved = [
+            {
+                'agent_name':   r.get('agent_name',   ''),
+                'total':        r.get('TotalProblems', 0) or 0,
+                'resolved':     r.get('Resolved',      0) or 0,
+                'unresolved':   r.get('Unresolved',    0) or 0,
+            }
+            for r in raw_agents
+        ]
         cursor.nextset()
 
         conn.close()
