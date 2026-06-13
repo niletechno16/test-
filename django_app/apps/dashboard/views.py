@@ -207,8 +207,13 @@ def home(request):
                 'total':        r.get('TotalProblems', 0) or 0,
                 'resolved':     r.get('Resolved',      0) or 0,
                 'unresolved':   r.get('Unresolved',    0) or 0,
+                'avg':          round(r.get('Avg_Resolution_Time', 0) or 0),
             }
             for r in raw_agents
+        ]
+        avg_resolution_by_agent = [
+            {'name': a['agent_name'], 'avg': a['avg']}
+            for a in top_agents_resolved
         ]
         cursor.nextset()
 
@@ -257,7 +262,7 @@ def home(request):
             'unresolved_pct':          unresolved_pct,
             'traffic_by_date':         [],
             'avg_resolution_overall':  avg_resolution_overall,
-            'avg_resolution_by_agent': [],
+            'avg_resolution_by_agent': avg_resolution_by_agent,
         })
 
     except Exception as e:
