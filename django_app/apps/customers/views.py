@@ -16,10 +16,8 @@ def _resolve_filter(request, today):
     default_from = today.replace(day=1).strftime('%Y-%m-%d')
     last_day     = calendar.monthrange(today.year, today.month)[1]
     default_to   = today.replace(day=last_day).strftime('%Y-%m-%d')
-
     filter_mode       = request.GET.get('filter_mode', 'monthyear')
     filter_month_year = request.GET.get('month_year', '')
-
     if filter_mode == 'monthyear' and filter_month_year:
         try:
             y, m = int(filter_month_year[:4]), int(filter_month_year[5:7])
@@ -40,7 +38,6 @@ def _resolve_filter(request, today):
         date_from, date_to = default_from, default_to
         month_label       = f"{ARABIC_MONTHS[today.month]} {today.year}"
         filter_month_year = today.strftime('%Y-%m')
-
     return date_from, date_to, month_label, filter_mode, filter_month_year
 
 
@@ -51,7 +48,6 @@ def _filter_reports(reports, date_from, date_to):
 
 
 def _customers_from_reports(all_customers, filtered_reports):
-    """يحسب إحصائيات العملاء من الـ reports المفلترة."""
     stats = defaultdict(lambda: {'total': 0, 'resolved': 0, 'unresolved': 0, 'mins': []})
     for r in filtered_reports:
         c = r['customer_name']
@@ -62,7 +58,6 @@ def _customers_from_reports(all_customers, filtered_reports):
             stats[c]['unresolved'] += 1
         if r.get('resolution_minutes'):
             stats[c]['mins'].append(r['resolution_minutes'])
-
     result = []
     for customer in all_customers:
         name = customer['customer_name']
@@ -89,51 +84,50 @@ def customers_list(request):
     date_from, date_to, month_label, filter_mode, filter_month_year = _resolve_filter(request, today)
     search = request.GET.get('search', '')
 
+    base_ctx = {
+        'search': search, 'date_from': date_from, 'date_to': date_to,
+        'month_label': month_label, 'filter_mode': filter_mode,
+        'filter_month_year': filter_month_year, 'is_manager': True,
+    }
+
     if get_role(request.user) == 'visitor':
-        vdata            = get_visitor_data(request)
-        filtered_reports = _filter_reports(vdata['reports'], date_from, date_to)
-        customers        = _customers_from_reports(vdata['customers'], filtered_reports)
+        try:
+            vdata            = get_visitor_data(request)
+            filtered_reports = _filter_reports(vdata['reports'], date_from, date_to)
+            customers        = _customers_from_reports(vdata['customers'], filtered_reports)
+            if search:
+                customers = [c for c in customers if search in c['customer_name'] or search in c['customer_phone']]
+        except Exception:
+            customers = []
+        return render(request, 'customers/index.html', {**base_ctx, 'customers': customers})
+
+    try:
+        conn   = get_connection()
+        cursor = conn.cursor(as_dict=True)
+        search_clause = ""
         if search:
-            customers = [c for c in customers if search in c['customer_name'] or search in c['customer_phone']]
-        return render(request, 'customers/index.html', {
-            'customers': customers, 'search': search, 'is_manager': True,
-            'date_from': date_from, 'date_to': date_to,
-            'month_label': month_label,
-            'filter_mode': filter_mode, 'filter_month_year': filter_month_year,
-        })
+            search_clause = f" AND (c.customer_name LIKE N'%{search}%' OR c.customer_phone LIKE N'%{search}%')"
+        cursor.execute(f"""
+            SELECT c.customer_id, c.customer_name, c.customer_phone,
+                   COUNT(r.id) AS total_reports,
+                   SUM(CASE WHEN r.classification LIKE N'تم حل%' THEN 1 ELSE 0 END) AS resolved,
+                   SUM(CASE WHEN r.classification LIKE N'لم يتم%' THEN 1 ELSE 0 END) AS unresolved,
+                   AVG(CAST(r.resolution_minutes AS FLOAT)) AS avg_resolution_minutes
+            FROM customer_detail_by_A c
+            LEFT JOIN Customer_service_reports_by_A r
+                   ON c.customer_id = r.customer_id
+                   AND r.resolved_date >= {date_from.replace('-','')}
+                   AND r.resolved_date <= {date_to.replace('-','')}
+            WHERE 1=1{search_clause}
+            GROUP BY c.customer_id, c.customer_name, c.customer_phone
+            ORDER BY total_reports DESC
+        """)
+        customers = cursor.fetchall()
+        conn.close()
+    except Exception:
+        customers = []
 
-    conn   = get_connection()
-    cursor = conn.cursor(as_dict=True)
-
-    search_clause = ""
-    if search:
-        search_clause = f" AND (c.customer_name LIKE N'%{search}%' OR c.customer_phone LIKE N'%{search}%')"
-
-    query = f"""
-        SELECT c.customer_id, c.customer_name, c.customer_phone,
-               COUNT(r.id) AS total_reports,
-               SUM(CASE WHEN r.classification LIKE N'تم حل%' THEN 1 ELSE 0 END) AS resolved,
-               SUM(CASE WHEN r.classification LIKE N'لم يتم%' THEN 1 ELSE 0 END) AS unresolved,
-               AVG(CAST(r.resolution_minutes AS FLOAT)) AS avg_resolution_minutes
-        FROM customer_detail_by_A c
-        LEFT JOIN Customer_service_reports_by_A r
-               ON c.customer_id = r.customer_id
-               AND r.resolved_date >= {date_from.replace('-','')}
-               AND r.resolved_date <= {date_to.replace('-','')}
-        WHERE 1=1{search_clause}
-        GROUP BY c.customer_id, c.customer_name, c.customer_phone
-        ORDER BY total_reports DESC
-    """
-    cursor.execute(query)
-    customers = cursor.fetchall()
-    conn.close()
-
-    return render(request, 'customers/index.html', {
-        'customers': customers, 'search': search, 'is_manager': True,
-        'date_from': date_from, 'date_to': date_to,
-        'month_label': month_label,
-        'filter_mode': filter_mode, 'filter_month_year': filter_month_year,
-    })
+    return render(request, 'customers/index.html', {**base_ctx, 'customers': customers})
 
 
 @login_required
@@ -144,40 +138,38 @@ def customer_detail(request, customer_id):
     today = date.today()
     date_from, date_to, month_label, filter_mode, filter_month_year = _resolve_filter(request, today)
 
+    base_ctx = {
+        'date_from': date_from, 'date_to': date_to, 'month_label': month_label,
+        'filter_mode': filter_mode, 'filter_month_year': filter_month_year, 'is_manager': True,
+    }
+
     if get_role(request.user) == 'visitor':
-        vdata    = get_visitor_data(request)
-        customer = next((c for c in vdata['customers'] if c['customer_id'] == customer_id), None)
-        reports  = _filter_reports(
-            [r for r in vdata['reports'] if r['customer_name'] == customer['customer_name']],
-            date_from, date_to
-        )
-        reports = sorted(reports, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
-        return render(request, 'customers/detail.html', {
-            'customer': customer, 'reports': reports, 'is_manager': True,
-            'date_from': date_from, 'date_to': date_to,
-            'month_label': month_label,
-            'filter_mode': filter_mode, 'filter_month_year': filter_month_year,
-        })
+        try:
+            vdata    = get_visitor_data(request)
+            customer = next((c for c in vdata['customers'] if c['customer_id'] == customer_id), None)
+            reports  = _filter_reports(
+                [r for r in vdata['reports'] if r['customer_name'] == customer['customer_name']],
+                date_from, date_to
+            )
+            reports = sorted(reports, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
+        except Exception:
+            customer, reports = None, []
+        return render(request, 'customers/detail.html', {**base_ctx, 'customer': customer, 'reports': reports})
 
-    conn   = get_connection()
-    cursor = conn.cursor(as_dict=True)
+    try:
+        conn   = get_connection()
+        cursor = conn.cursor(as_dict=True)
+        cursor.execute(f"SELECT * FROM customer_detail_by_A WHERE customer_id = {customer_id}")
+        customer = cursor.fetchone()
+        where = f"WHERE customer_id = {customer_id}"
+        if date_from:
+            where += f" AND resolved_date >= {date_from.replace('-', '')}"
+        if date_to:
+            where += f" AND resolved_date <= {date_to.replace('-', '')}"
+        cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC, resolved_time DESC")
+        reports = cursor.fetchall()
+        conn.close()
+    except Exception:
+        customer, reports = None, []
 
-    cursor.execute(f"SELECT * FROM customer_detail_by_A WHERE customer_id = {customer_id}")
-    customer = cursor.fetchone()
-
-    where = f"WHERE customer_id = {customer_id}"
-    if date_from:
-        where += f" AND resolved_date >= {date_from.replace('-', '')}"
-    if date_to:
-        where += f" AND resolved_date <= {date_to.replace('-', '')}"
-
-    cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC, resolved_time DESC")
-    reports = cursor.fetchall()
-    conn.close()
-
-    return render(request, 'customers/detail.html', {
-        'customer': customer, 'reports': reports, 'is_manager': True,
-        'date_from': date_from, 'date_to': date_to,
-        'month_label': month_label,
-        'filter_mode': filter_mode, 'filter_month_year': filter_month_year,
-    })
+    return render(request, 'customers/detail.html', {**base_ctx, 'customer': customer, 'reports': reports})

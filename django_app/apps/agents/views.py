@@ -16,10 +16,8 @@ def _resolve_filter(request, today):
     default_from = today.replace(day=1).strftime('%Y-%m-%d')
     last_day     = calendar.monthrange(today.year, today.month)[1]
     default_to   = today.replace(day=last_day).strftime('%Y-%m-%d')
-
     filter_mode       = request.GET.get('filter_mode', 'monthyear')
     filter_month_year = request.GET.get('month_year', '')
-
     if filter_mode == 'monthyear' and filter_month_year:
         try:
             y, m = int(filter_month_year[:4]), int(filter_month_year[5:7])
@@ -40,7 +38,6 @@ def _resolve_filter(request, today):
         date_from, date_to = default_from, default_to
         month_label       = f"{ARABIC_MONTHS[today.month]} {today.year}"
         filter_month_year = today.strftime('%Y-%m')
-
     return date_from, date_to, month_label, filter_mode, filter_month_year
 
 
@@ -51,7 +48,6 @@ def _filter_reports(reports, date_from, date_to):
 
 
 def _agents_from_reports(all_agents, filtered_reports):
-    """يحسب إحصائيات الأيجنت من الـ reports المفلترة."""
     stats = defaultdict(lambda: {'total': 0, 'resolved': 0, 'unresolved': 0, 'mins': []})
     for r in filtered_reports:
         a = r['agent_name']
@@ -62,7 +58,6 @@ def _agents_from_reports(all_agents, filtered_reports):
             stats[a]['unresolved'] += 1
         if r.get('resolution_minutes'):
             stats[a]['mins'].append(r['resolution_minutes'])
-
     result = []
     for agent in all_agents:
         name = agent['agent_name']
@@ -85,49 +80,50 @@ def agents_list(request):
     date_from, date_to, month_label, filter_mode, filter_month_year = _resolve_filter(request, today)
     search = request.GET.get('search', '')
 
-    if get_role(request.user) == 'visitor':
-        vdata            = get_visitor_data(request)
-        filtered_reports = _filter_reports(vdata['reports'], date_from, date_to)
-        agents           = _agents_from_reports(vdata['agents'], filtered_reports)
-        if search:
-            agents = [a for a in agents if search in a['agent_name']]
-        return render(request, 'agents/index.html', {
-            'agents': agents, 'is_manager': True,
-            'search': search, 'date_from': date_from, 'date_to': date_to,
-            'month_label': month_label,
-            'filter_mode': filter_mode, 'filter_month_year': filter_month_year,
-        })
-
-    conn   = get_connection()
-    cursor = conn.cursor(as_dict=True)
-
-    where = "WHERE 1=1"
-    if not is_manager_level(request.user):
-        where += f" AND agent_name = '{request.user.first_name or request.user.username}'"
-    if search:
-        where += f" AND agent_name LIKE N'%{search}%'"
-    if date_from:
-        where += f" AND resolved_date >= {date_from.replace('-', '')}"
-    if date_to:
-        where += f" AND resolved_date <= {date_to.replace('-', '')}"
-
-    cursor.execute(f"""
-        SELECT agent_id, agent_name, COUNT(*) AS total,
-               SUM(CASE WHEN classification LIKE N'تم حل%' THEN 1 ELSE 0 END) AS resolved,
-               SUM(CASE WHEN classification LIKE N'لم يتم%' THEN 1 ELSE 0 END) AS unresolved,
-               AVG(CAST(resolution_minutes AS FLOAT)) AS avg_resolution_minutes
-        FROM Customer_service_reports_by_A {where}
-        GROUP BY agent_id, agent_name ORDER BY total DESC
-    """)
-    agents = cursor.fetchall()
-    conn.close()
-
-    return render(request, 'agents/index.html', {
-        'agents': agents, 'is_manager': is_manager_level(request.user),
+    base_ctx = {
         'search': search, 'date_from': date_from, 'date_to': date_to,
-        'month_label': month_label,
-        'filter_mode': filter_mode, 'filter_month_year': filter_month_year,
-    })
+        'month_label': month_label, 'filter_mode': filter_mode,
+        'filter_month_year': filter_month_year,
+        'is_manager': is_manager_level(request.user),
+    }
+
+    if get_role(request.user) == 'visitor':
+        try:
+            vdata            = get_visitor_data(request)
+            filtered_reports = _filter_reports(vdata['reports'], date_from, date_to)
+            agents           = _agents_from_reports(vdata['agents'], filtered_reports)
+            if search:
+                agents = [a for a in agents if search in a['agent_name']]
+        except Exception:
+            agents = []
+        return render(request, 'agents/index.html', {**base_ctx, 'agents': agents, 'is_manager': True})
+
+    try:
+        conn   = get_connection()
+        cursor = conn.cursor(as_dict=True)
+        where = "WHERE 1=1"
+        if not is_manager_level(request.user):
+            where += f" AND agent_name = '{request.user.first_name or request.user.username}'"
+        if search:
+            where += f" AND agent_name LIKE N'%{search}%'"
+        if date_from:
+            where += f" AND resolved_date >= {date_from.replace('-', '')}"
+        if date_to:
+            where += f" AND resolved_date <= {date_to.replace('-', '')}"
+        cursor.execute(f"""
+            SELECT agent_id, agent_name, COUNT(*) AS total,
+                   SUM(CASE WHEN classification LIKE N'تم حل%' THEN 1 ELSE 0 END) AS resolved,
+                   SUM(CASE WHEN classification LIKE N'لم يتم%' THEN 1 ELSE 0 END) AS unresolved,
+                   AVG(CAST(resolution_minutes AS FLOAT)) AS avg_resolution_minutes
+            FROM Customer_service_reports_by_A {where}
+            GROUP BY agent_id, agent_name ORDER BY total DESC
+        """)
+        agents = cursor.fetchall()
+        conn.close()
+    except Exception:
+        agents = []
+
+    return render(request, 'agents/index.html', {**base_ctx, 'agents': agents})
 
 
 @login_required
@@ -135,41 +131,39 @@ def agent_detail(request, agent_id):
     today = date.today()
     date_from, date_to, month_label, filter_mode, filter_month_year = _resolve_filter(request, today)
 
-    if get_role(request.user) == 'visitor':
-        vdata         = get_visitor_data(request)
-        agent         = next((a for a in vdata['agents'] if a['agent_id'] == agent_id), None)
-        agent_reports = _filter_reports(
-            [r for r in vdata['reports'] if r['agent_id'] == agent_id],
-            date_from, date_to
-        )
-        agent_reports = sorted(agent_reports, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
-        return render(request, 'agents/detail.html', {
-            'agent': agent, 'reports': agent_reports,
-            'is_manager': True, 'date_from': date_from, 'date_to': date_to,
-            'month_label': month_label,
-            'filter_mode': filter_mode, 'filter_month_year': filter_month_year,
-        })
-
-    conn   = get_connection()
-    cursor = conn.cursor(as_dict=True)
-
-    cursor.execute(f"SELECT TOP 1 agent_id, agent_name FROM Customer_service_reports_by_A WHERE agent_id = {agent_id}")
-    agent = cursor.fetchone()
-
-    where = f"WHERE agent_id = {agent_id}"
-    if date_from:
-        where += f" AND resolved_date >= {date_from.replace('-', '')}"
-    if date_to:
-        where += f" AND resolved_date <= {date_to.replace('-', '')}"
-
-    cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC, resolved_time DESC")
-    reports = cursor.fetchall()
-    conn.close()
-
-    return render(request, 'agents/detail.html', {
-        'agent': agent, 'reports': reports,
-        'is_manager': is_manager_level(request.user),
-        'date_from': date_from, 'date_to': date_to,
-        'month_label': month_label,
+    base_ctx = {
+        'date_from': date_from, 'date_to': date_to, 'month_label': month_label,
         'filter_mode': filter_mode, 'filter_month_year': filter_month_year,
-    })
+        'is_manager': is_manager_level(request.user),
+    }
+
+    if get_role(request.user) == 'visitor':
+        try:
+            vdata         = get_visitor_data(request)
+            agent         = next((a for a in vdata['agents'] if a['agent_id'] == agent_id), None)
+            agent_reports = _filter_reports(
+                [r for r in vdata['reports'] if r['agent_id'] == agent_id],
+                date_from, date_to
+            )
+            agent_reports = sorted(agent_reports, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
+        except Exception:
+            agent, agent_reports = None, []
+        return render(request, 'agents/detail.html', {**base_ctx, 'agent': agent, 'reports': agent_reports, 'is_manager': True})
+
+    try:
+        conn   = get_connection()
+        cursor = conn.cursor(as_dict=True)
+        cursor.execute(f"SELECT TOP 1 agent_id, agent_name FROM Customer_service_reports_by_A WHERE agent_id = {agent_id}")
+        agent = cursor.fetchone()
+        where = f"WHERE agent_id = {agent_id}"
+        if date_from:
+            where += f" AND resolved_date >= {date_from.replace('-', '')}"
+        if date_to:
+            where += f" AND resolved_date <= {date_to.replace('-', '')}"
+        cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC, resolved_time DESC")
+        reports = cursor.fetchall()
+        conn.close()
+    except Exception:
+        agent, reports = None, []
+
+    return render(request, 'agents/detail.html', {**base_ctx, 'agent': agent, 'reports': reports})
