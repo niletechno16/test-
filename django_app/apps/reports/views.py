@@ -84,6 +84,7 @@ def reports_list(request):
             for r in data:
                 c = r.get('classification', '')
                 r['classification_type'] = 'resolved' if c.startswith('تم حل') else ('unresolved' if 'لم يتم' in c else 'other')
+
             agents = list(set(r['agent_name'] for r in vdata['reports']))
         except Exception:
             data, agents = [], []
@@ -178,22 +179,29 @@ def monthly(request):
         return render(request, 'reports/monthly.html', {**base_ctx, 'data': data, 'is_manager': True})
 
     try:
-        conn   = get_connection()
-        cursor = conn.cursor(as_dict=True)
-        month_start = int(f"{year}{month:02d}01")
-        month_end   = int(f"{year}{month:02d}{calendar.monthrange(year, month)[1]}")
-        where = f"WHERE resolved_date BETWEEN {month_start} AND {month_end}"
-        if not is_manager_level(request.user):
-            where += f" AND agent_name = '{request.user.first_name or request.user.username}'"
-        cursor.execute(f"""
-            SELECT agent_name, COUNT(*) AS total,
-                   SUM(CASE WHEN classification LIKE N'تم حل%' THEN 1 ELSE 0 END) AS resolved,
-                   SUM(CASE WHEN classification LIKE N'لم يتم%' THEN 1 ELSE 0 END) AS unresolved
-            FROM Customer_service_reports_by_A {where}
-            GROUP BY agent_name ORDER BY total DESC
-        """)
-        data = cursor.fetchall()
+        conn      = get_connection()
+        cursor    = conn.cursor(as_dict=True)
+        date_from = f"{year}-{month:02d}-01"
+        date_to   = f"{year}-{month:02d}-{calendar.monthrange(year, month)[1]:02d}"
+        cursor.execute(
+            "EXEC Top_Agent_resolved_byA @FromDate = %s, @ToDate = %s",
+            (date_from, date_to)
+        )
+        raw  = cursor.fetchall() or []
         conn.close()
+        data = [
+            {
+                'agent_name': r.get('agent_name', ''),
+                'total':      r.get('TotalProblems', 0) or 0,
+                'resolved':   r.get('Resolved',      0) or 0,
+                'unresolved': r.get('Unresolved',    0) or 0,
+            }
+            for r in raw
+            if r.get('agent_name')
+        ]
+        if not is_manager_level(request.user):
+            current = request.user.first_name or request.user.username
+            data = [r for r in data if r['agent_name'] == current]
     except Exception:
         data = []
 
