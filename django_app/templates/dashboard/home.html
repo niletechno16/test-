@@ -139,45 +139,60 @@
 
     .problems-list {
         list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
 
     .problems-list li {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 10px 0;
-        border-bottom: 1px solid rgba(46, 50, 80, .5);
-        font-size: 14px;
-    }
-
-    .problems-list li:last-child {
-        border-bottom: none;
+        gap: 10px;
+        font-size: 13px;
     }
 
     .problems-list .rank {
-        width: 24px;
-        height: 24px;
-        border-radius: 6px;
-        background: var(--surface2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: 20px;
         font-size: 12px;
         font-weight: 700;
         color: var(--muted);
-        margin-left: 10px;
         flex-shrink: 0;
+        text-align: center;
     }
 
     .problems-list .prob-text {
-        flex: 1;
+        width: 110px;
+        flex-shrink: 0;
         color: var(--text);
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .problems-list .prob-bar-wrap {
+        flex: 1;
+        background: var(--surface2);
+        border-radius: 4px;
+        height: 22px;
+        overflow: hidden;
+    }
+
+    .problems-list .prob-bar {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 4px;
+        transition: width 0.4s ease;
+        min-width: 4px;
     }
 
     .problems-list .prob-count {
+        width: 36px;
+        flex-shrink: 0;
         color: var(--accent);
         font-weight: 700;
         font-size: 13px;
+        text-align: left;
     }
 
     .pie-wrap {
@@ -375,15 +390,22 @@
         <div class="section-title" data-ar="أكثر المشاكل تكراراً" data-en="Most Common Issues">أكثر المشاكل تكراراً
         </div>
         <ul class="problems-list">
+            {% if common_problems %}
+            {% with max_val=common_problems.0.total %}
             {% for p in common_problems %}
             <li>
                 <span class="rank">{{ forloop.counter }}</span>
-                <span class="prob-text">{{ p.classification }}</span>
+                <span class="prob-text" title="{{ p.classification }}">{{ p.classification }}</span>
+                <div class="prob-bar-wrap">
+                    <div class="prob-bar" style="width:{% widthratio p.total max_val 100 %}%"></div>
+                </div>
                 <span class="prob-count">{{ p.total }}</span>
             </li>
-            {% empty %}
-            <li><span style="color:var(--muted)">لا توجد بيانات</span></li>
             {% endfor %}
+            {% endwith %}
+            {% else %}
+            <li><span style="color:var(--muted)">لا توجد بيانات</span></li>
+            {% endif %}
         </ul>
     </div>
 
