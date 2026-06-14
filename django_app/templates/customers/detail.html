@@ -18,7 +18,7 @@
     .customer-header .big-avatar {
         width: 64px;
         height: 64px;
-        border-radius: 16px;
+        border-radius: 50%;
         background: linear-gradient(135deg, var(--yellow), #f97316);
         display: flex;
         align-items: center;
@@ -127,6 +127,49 @@
     .btn-apply-filter:hover {
         background: #3b5fe8;
     }
+
+    /* ── Classification expand ── */
+    .classification-cell { max-width: 180px; }
+    .classification-wrap { display: flex; align-items: flex-start; gap: 4px; }
+    .classification-text {
+        flex: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        transition: all 0.25s ease;
+        word-break: break-word;
+    }
+    .classification-text.expanded { display: block; overflow: visible; -webkit-line-clamp: unset; }
+    .expand-toggle {
+        flex-shrink: 0;
+        background: none;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-size: 11px;
+        transition: color 0.15s, background 0.15s;
+        margin-top: 1px;
+        display: none;
+    }
+    .expand-toggle:hover { color: var(--accent); background: var(--surface2); }
+    .expand-toggle i { transition: transform 0.25s ease; }
+    .expand-toggle.open i { transform: rotate(180deg); }
+
+    /* ── Summary expand ── */
+    .summary-cell { max-width: 300px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .summary-wrap { display: flex; align-items: flex-start; gap: 6px; }
+    .summary-text {
+        flex: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        transition: all 0.25s ease;
+    }
+    .summary-text.expanded { display: block; overflow: visible; }
 </style>
 {% endblock %}
 
@@ -210,7 +253,14 @@
                 <tr>
                     <td><span class="badge badge-blue"># {{ r.conv_id }}</span></td>
                     <td>{{ r.agent_name }}</td>
-                    <td><span class="badge badge-yellow">{{ r.classification }}</span></td>
+                    <td class="classification-cell">
+                        <div class="classification-wrap">
+                            <span class="classification-text badge badge-yellow">{{ r.classification }}</span>
+                            <button class="expand-toggle" onclick="toggleExpand(this)" title="عرض الكل">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                        </div>
+                    </td>
                     <td>{{ r.resolve_date }}</td>
                     <td>{{ r.resolved_time }}</td>
                     <td>
@@ -220,7 +270,14 @@
                         <span style="color:var(--muted);font-size:12px">—</span>
                         {% endif %}
                     </td>
-                    <td style="max-width:300px;color:var(--muted);font-size:13px">{{ r.summary|truncatechars:80 }}</td>
+                    <td class="summary-cell">
+<div class="summary-wrap">
+                            <span class="summary-text">{{ r.summary }}</span>
+                            <button class="expand-toggle" onclick="toggleExpand(this)" title="عرض الكل">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                        </div>
+                    </td>
                     <td>
                         {% if r.status_label == 'Resolved' %}
                         <span class="badge badge-green">Resolved</span>
@@ -254,5 +311,19 @@
         var mode = new URLSearchParams(window.location.search).get('filter_mode') || 'monthyear';
         switchFilterMode(mode);
     })();
+
+    function toggleExpand(btn) {
+        var text = btn.previousElementSibling;
+        var expanded = text.classList.toggle('expanded');
+        btn.classList.toggle('open', expanded);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.classification-text, .summary-text').forEach(function (el) {
+            if (el.scrollHeight > el.clientHeight + 2) {
+                el.nextElementSibling.style.display = 'inline-flex';
+            }
+        });
+    });
 </script>
 {% endblock %}
