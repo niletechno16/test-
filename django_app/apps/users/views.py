@@ -62,6 +62,8 @@ def login_view(request):
         import logging
         log = logging.getLogger(__name__)
 
+        from django.contrib.auth.hashers import is_password_usable
+
         user = authenticate(request, username=username, password=password)
 
         if not user:
@@ -71,8 +73,8 @@ def login_view(request):
             except (UserProfile.DoesNotExist, ValueError):
                 pass
 
-        # لو مش موجود في Django خالص → دور عليه في SQL
-        if not user and not UserProfile.objects.filter(agent_id=username).exists():
+        # لو authenticate فشلت → دور في SQL وصلّح/أنشئ اليوزر
+        if not user:
             try:
                 conn   = get_connection()
                 cursor = conn.cursor()
@@ -88,28 +90,37 @@ def login_view(request):
                     sql_name   = (row[1] or '').strip()
                     saved_hash = row[2].strip() if row[2] else None
 
-                    from django.contrib.auth.hashers import is_password_usable
+                    # جيب أو أنشئ الـ Django User
+                    try:
+                        dj_user = User.objects.get(username=sql_id)
+                    except User.DoesNotExist:
+                        dj_user = None
 
                     if saved_hash and is_password_usable(saved_hash):
-                        # عنده باسورد محفوظة من قبل → استخدمها
-                        new_user          = User(username=sql_id, first_name=sql_name)
-                        new_user.password = saved_hash
-                        new_user.save()
+                        # فيه hash محفوظ → حدّث الباسورد في Django منه (زي setup_admins)
+                        if dj_user is None:
+                            dj_user = User(username=sql_id, first_name=sql_name)
+                        dj_user.password = saved_hash
+                        dj_user.save()
                         is_first = False
                     else:
                         # أول مرة خالص → باسورد = ID
-                        new_user = User.objects.create_user(
-                            username=sql_id,
-                            password=sql_id,
-                            first_name=sql_name,
-                        )
+                        if dj_user is None:
+                            dj_user = User.objects.create_user(
+                                username=sql_id,
+                                password=sql_id,
+                                first_name=sql_name,
+                            )
+                        else:
+                            dj_user.set_password(sql_id)
+                            dj_user.save()
                         # احفظ الـ hash في SQL
                         try:
                             conn2   = get_connection()
                             cursor2 = conn2.cursor()
                             cursor2.execute(
                                 "UPDATE users_Details_byA SET phone = %s WHERE user_id = %s",
-                                (new_user.password, sql_id)
+                                (dj_user.password, sql_id)
                             )
                             conn2.commit()
                             conn2.close()
@@ -117,15 +128,18 @@ def login_view(request):
                             log.warning("فشل حفظ الـ hash في SQL: %s", e)
                         is_first = True
 
-                    UserProfile.objects.create(
-                        user=new_user,
+                    # أنشئ أو حدّث الـ UserProfile
+                    profile, _ = UserProfile.objects.get_or_create(
                         agent_id=sql_id,
-                        full_name=sql_name,
-                        role='agent',
-                        is_first_login=is_first,
+                        defaults={
+                            'user':          dj_user,
+                            'full_name':     sql_name,
+                            'role':          'agent',
+                            'is_first_login': is_first,
+                        }
                     )
 
-                    # أول مرة → باسورد = ID، رجع تاني → باسورد = اللي كتبه اليوزر
+                    # authenticate بالباسورد الصح
                     login_password = sql_id if is_first else password
                     user = authenticate(request, username=sql_id, password=login_password)
                     if user:
