@@ -78,26 +78,39 @@ def reports_list(request):
     try:
         conn   = get_connection()
         cursor = conn.cursor(as_dict=True)
-        where = "WHERE 1=1"
-        if not is_manager_level(request.user):
-            where += f" AND agent_name = '{request.user.first_name or request.user.username}'"
+        cursor.execute(
+            "EXEC Get_Reports_byA @FromDate = %s, @ToDate = %s",
+            (date_from, date_to)
+        )
+        raw = cursor.fetchall() or []
+        data = [
+            {
+                'conv_id':            r.get('conv_id',           ''),
+                'customer_name':      r.get('customer_name',     ''),
+                'customer_phone':     r.get('customer_phone',    ''),
+                'agent_name':         r.get('agent_name',        ''),
+                'classification':     r.get('classification',    ''),
+                'summary':            r.get('summary',           ''),
+                'resolution_minutes': r.get('resolution_minutes', None),
+                'resolve_date':       r.get('resolve_date',      ''),
+                'resolved_time':      r.get('resolve_time',      ''),
+                'status_label':       r.get('status_label',      ''),
+            }
+            for r in raw
+        ]
+        # فلتر agent و classification بعد البروسيدر
         if agent_filter:
-            where += f" AND agent_name = '{agent_filter}'"
-        if date_from:
-            where += f" AND resolved_date >= {date_from.replace('-', '')}"
-        if date_to:
-            where += f" AND resolved_date <= {date_to.replace('-', '')}"
+            data = [r for r in data if r['agent_name'] == agent_filter]
         if class_filter:
-            where += f" AND classification LIKE N'%{class_filter}%'"
-        cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC, resolved_time DESC")
-        data = cursor.fetchall()
-        for r in data:
-            c = r.get('classification', '') or ''
-            r['classification_type'] = 'resolved' if c.startswith('تم حل') else ('unresolved' if 'لم يتم' in c else 'other')
+            data = [r for r in data if class_filter in r['classification']]
+        if not is_manager_level(request.user):
+            current = request.user.first_name or request.user.username
+            data = [r for r in data if r['agent_name'] == current]
+        # جيب قائمة الأجنتات للفلتر
+        cursor.nextset()
         agents = []
         if is_manager_level(request.user):
-            cursor.execute("SELECT DISTINCT agent_name FROM Customer_service_reports_by_A")
-            agents = [r['agent_name'] for r in cursor.fetchall()]
+            agents = sorted(set(r['agent_name'] for r in data if r['agent_name']))
         conn.close()
     except Exception:
         data, agents = [], []
