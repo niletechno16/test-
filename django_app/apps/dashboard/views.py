@@ -112,7 +112,7 @@ def home(request):
                     agents_map[a]['resolved'] += 1
                 if 'لم يتم' in r['classification']:
                     agents_map[a]['unresolved'] += 1
-            top_agents_resolved = sorted(agents_map.values(), key=lambda x: x['total'], reverse=True)[:5]
+            top_agents_resolved = sorted(agents_map.values(), key=lambda x: x['total'], reverse=True)[:4]
 
             cust_map = {}
             for r in filtered:
@@ -210,7 +210,7 @@ def home(request):
                 'avg':          round(r.get('Avg_Resolution_Time', 0) or 0),
             }
             for r in raw_agents
-        ]
+        ][:4]
         avg_resolution_by_agent = [
             {'name': a['agent_name'], 'avg': a['avg']}
             for a in top_agents_resolved

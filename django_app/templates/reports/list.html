@@ -10,6 +10,52 @@
     line-height: 1.5;
   }
 
+  .summary-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .summary-text {
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: all 0.25s ease;
+  }
+
+  .summary-text.expanded {
+    display: block;
+    overflow: visible;
+  }
+
+  .summary-toggle {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 11px;
+    transition: color 0.15s, background 0.15s;
+    margin-top: 1px;
+  }
+
+  .summary-toggle:hover {
+    color: var(--accent);
+    background: var(--surface2);
+  }
+
+  .summary-toggle i {
+    transition: transform 0.25s ease;
+  }
+
+  .summary-toggle.open i {
+    transform: rotate(180deg);
+  }
+
   /* ── Smart Filter ── */
   .smart-filter-wrap {
     display: flex;
@@ -203,12 +249,19 @@
             <span style="color:var(--muted);font-size:12px">—</span>
             {% endif %}
           </td>
-          <td class="summary-cell">{{ r.summary|truncatechars:70 }}</td>
+          <td class="summary-cell">
+            <div class="summary-wrap">
+              <span class="summary-text">{{ r.summary }}</span>
+              <button class="summary-toggle" onclick="toggleSummary(this)" title="عرض الكل">
+                <i class="fa-solid fa-chevron-down"></i>
+              </button>
+            </div>
+          </td>
           <td>
             {% if r.status_label == 'Resolved' %}
-            <span class="badge badge-green">Resolved</span>
+            <span class="badge badge-success">Resolved</span>
             {% else %}
-            <span class="badge badge-red">Unresolved</span>
+            <span class="badge badge-danger">Unresolved</span>
             {% endif %}
           </td>
         </tr>
@@ -237,5 +290,11 @@
     var mode = new URLSearchParams(window.location.search).get('filter_mode') || 'monthyear';
     switchFilterMode(mode);
   })();
+
+  function toggleSummary(btn) {
+    var text = btn.previousElementSibling;
+    var expanded = text.classList.toggle('expanded');
+    btn.classList.toggle('open', expanded);
+  }
 </script>
 {% endblock %}
