@@ -56,6 +56,60 @@
     transform: rotate(180deg);
   }
 
+  /* ── Classification cell (same expand logic as summary) ── */
+  .classification-cell {
+    max-width: 180px;
+  }
+
+  .classification-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .classification-text {
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: all 0.25s ease;
+    word-break: break-word;
+  }
+
+  .classification-text.expanded {
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: unset;
+  }
+
+  .classification-toggle {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 11px;
+    transition: color 0.15s, background 0.15s;
+    margin-top: 1px;
+    display: none; /* hidden until JS detects overflow */
+  }
+
+  .classification-toggle:hover {
+    color: var(--accent);
+    background: var(--surface2);
+  }
+
+  .classification-toggle i {
+    transition: transform 0.25s ease;
+  }
+
+  .classification-toggle.open i {
+    transform: rotate(180deg);
+  }
+
   /* ── Smart Filter ── */
   .smart-filter-wrap {
     display: flex;
@@ -239,7 +293,14 @@
           <td>{{ r.customer_name }}</td>
           <td style="direction:ltr;font-size:13px">{{ r.customer_phone }}</td>
           <td>{{ r.agent_name }}</td>
-          <td><span class="badge badge-yellow">{{ r.classification }}</span></td>
+          <td class="classification-cell">
+            <div class="classification-wrap">
+              <span class="classification-text badge badge-yellow">{{ r.classification }}</span>
+              <button class="classification-toggle" onclick="toggleClassification(this)" title="عرض الكل">
+                <i class="fa-solid fa-chevron-down"></i>
+              </button>
+            </div>
+          </td>
           <td>{{ r.resolve_date }}</td>
           <td>{{ r.resolved_time }}</td>
           <td>
@@ -296,5 +357,20 @@
     var expanded = text.classList.toggle('expanded');
     btn.classList.toggle('open', expanded);
   }
+
+  function toggleClassification(btn) {
+    var text = btn.previousElementSibling;
+    var expanded = text.classList.toggle('expanded');
+    btn.classList.toggle('open', expanded);
+  }
+
+  // Show the expand arrow only when classification text is actually clipped
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.classification-text').forEach(function (el) {
+      if (el.scrollHeight > el.clientHeight + 2) {
+        el.nextElementSibling.style.display = 'inline-flex';
+      }
+    });
+  });
 </script>
 {% endblock %}
