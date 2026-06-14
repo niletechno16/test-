@@ -111,7 +111,9 @@ def reports_list(request):
         if is_manager_level(request.user):
             agents = sorted(set(r['agent_name'] for r in data if r['agent_name']))
         conn.close()
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error("Reports DB error: %s", e, exc_info=True)
         data, agents = [], []
 
     return render(request, 'reports/list.html', {**base_ctx, 'data': data, 'agents': agents})
