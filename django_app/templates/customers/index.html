@@ -163,6 +163,41 @@
     .btn-apply-filter:hover {
         background: #3b5fe8;
     }
+
+    /* ── Pagination ── */
+    .page-btn {
+        min-width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        font-family: 'Cairo', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 10px;
+        transition: background .15s, border-color .15s, color .15s;
+    }
+
+    .page-btn:hover:not(:disabled) {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    .page-btn.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+    }
+
+    .page-btn:disabled {
+        opacity: .35;
+        cursor: not-allowed;
+    }
 </style>
 {% endblock %}
 
@@ -226,10 +261,24 @@
 </div>
 
 {% if customers %}
-<div class="customers-grid">
+
+<!-- Customers count -->
+<div style="margin-bottom:12px;font-size:13px;color:var(--muted)">
+    <span data-ar="إجمالي العملاء" data-en="Total Customers">إجمالي العملاء</span>:
+    <strong id="totalCount">{{ customers|length }}</strong>
+    &nbsp;|&nbsp;
+    <span data-ar="الصفحة" data-en="Page">الصفحة</span>
+    <strong id="currentPageLabel">1</strong>
+    <span data-ar="من" data-en="of">من</span>
+    <strong id="totalPagesLabel"></strong>
+</div>
+
+<!-- Cards grid -->
+<div class="customers-grid" id="customersGrid">
     {% for c in customers %}
     <a href="{% url 'customer_detail' c.customer_id %}?filter_mode={{ filter_mode }}&month_year={{ filter_month_year }}&from={{ date_from }}&to={{ date_to }}"
-        class="customer-card">
+        class="customer-card"
+        data-total="{{ c.total_reports }}">
         <div class="top">
             <div class="avatar">{{ c.customer_name|first }}</div>
             <div>
@@ -252,17 +301,18 @@
             </div>
         </div>
         {% if c.avg_resolution_minutes %}
-        <div
-            style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:11px;color:var(--muted)" data-ar="متوسط وقت الحل" data-en="Avg. Resolution">متوسط وقت
-                الحل</span>
-            <span style="font-size:14px;font-weight:800;color:var(--blue)">{{ c.avg_resolution_minutes }} <span
-                    data-ar="د" data-en="min">د</span></span>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:11px;color:var(--muted)" data-ar="متوسط وقت الحل" data-en="Avg. Resolution">متوسط وقت الحل</span>
+            <span style="font-size:14px;font-weight:800;color:var(--blue)">{{ c.avg_resolution_minutes }} <span data-ar="د" data-en="min">د</span></span>
         </div>
         {% endif %}
     </a>
     {% endfor %}
 </div>
+
+<!-- Pagination controls -->
+<div id="paginationWrap" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:28px;flex-wrap:wrap;"></div>
+
 {% else %}
 <div style="text-align:center;padding:60px;color:var(--muted)">
     <i class="fa-solid fa-users" style="font-size:48px;opacity:.3;display:block;margin-bottom:16px"></i>
@@ -285,12 +335,102 @@
         switchFilterMode(mode);
     })();
 
+    // ── Pagination ──
+    var CARDS_PER_PAGE = 30;
+    var currentPage = 1;
+    var allCards = [];
+    var filteredCards = [];
+
+    function initPagination() {
+        allCards = Array.from(document.querySelectorAll('.customer-card'));
+        // مرتبين تنازلياً بالـ total (البروسيدر بيرتبهم بس نتأكد)
+        allCards.sort(function(a, b) {
+            return parseInt(b.dataset.total) - parseInt(a.dataset.total);
+        });
+        filteredCards = allCards.slice();
+        renderPage(1);
+    }
+
+    function renderPage(page) {
+        currentPage = page;
+        var total = filteredCards.length;
+        var totalPages = Math.ceil(total / CARDS_PER_PAGE) || 1;
+        var start = (page - 1) * CARDS_PER_PAGE;
+        var end = start + CARDS_PER_PAGE;
+
+        // أخبي كل الكروت
+        allCards.forEach(function(c) { c.style.display = 'none'; });
+
+        // اعرض الكروت بتاعة الصفحة الحالية
+        filteredCards.slice(start, end).forEach(function(c) { c.style.display = 'block'; });
+
+        // أپديت الـ labels
+        document.getElementById('currentPageLabel').textContent = page;
+        document.getElementById('totalPagesLabel').textContent = totalPages;
+        document.getElementById('totalCount').textContent = total;
+
+        // ارسم أزرار الـ pagination
+        buildPagination(page, totalPages);
+    }
+
+    function buildPagination(page, totalPages) {
+        var wrap = document.getElementById('paginationWrap');
+        wrap.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        function btn(label, targetPage, isActive, isDisabled) {
+            var b = document.createElement('button');
+            b.className = 'page-btn' + (isActive ? ' active' : '');
+            b.disabled = isDisabled;
+            b.innerHTML = label;
+            b.onclick = function() { renderPage(targetPage); window.scrollTo({top:0, behavior:'smooth'}); };
+            wrap.appendChild(b);
+        }
+
+        // زر السابق
+        btn('<i class="fa-solid fa-chevron-right"></i>', page - 1, false, page === 1);
+
+        // أرقام الصفحات
+        var pages = [];
+        if (totalPages <= 7) {
+            for (var i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            pages = [1, 2];
+            if (page > 4) pages.push('...');
+            for (var i = Math.max(3, page-1); i <= Math.min(totalPages-2, page+1); i++) pages.push(i);
+            if (page < totalPages - 3) pages.push('...');
+            pages.push(totalPages - 1, totalPages);
+            pages = [...new Set(pages)];
+        }
+
+        pages.forEach(function(p) {
+            if (p === '...') {
+                var span = document.createElement('span');
+                span.style.cssText = 'color:var(--muted);padding:0 4px;';
+                span.textContent = '...';
+                wrap.appendChild(span);
+            } else {
+                btn(p, p, p === page, false);
+            }
+        });
+
+        // زر التالي
+        btn('<i class="fa-solid fa-chevron-left"></i>', page + 1, false, page === totalPages);
+    }
+
+    // Search مع الـ pagination
     document.querySelector('input[name="search"]').addEventListener('input', function () {
         var val = this.value.toLowerCase();
-        document.querySelectorAll('.customer-card').forEach(function (card) {
+        filteredCards = allCards.filter(function(card) {
             var name = card.querySelector('.name').textContent.toLowerCase();
-            card.style.display = name.includes(val) ? 'block' : 'none';
+            return name.includes(val);
         });
+        renderPage(1);
     });
+
+    // شغل الـ pagination بعد تحميل الصفحة
+    if (document.getElementById('customersGrid')) {
+        initPagination();
+    }
 </script>
 {% endblock %}

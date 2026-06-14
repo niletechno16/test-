@@ -104,25 +104,25 @@ def customers_list(request):
     try:
         conn   = get_connection()
         cursor = conn.cursor(as_dict=True)
-        search_clause = ""
+        cursor.execute(
+            "EXEC Top_Customer_resolved_byA @FromDate = %s, @ToDate = %s",
+            (date_from, date_to)
+        )
+        raw = cursor.fetchall() or []
+        customers = [
+            {
+                'customer_id':            r.get('customer_id',        ''),
+                'customer_name':          r.get('customer_name',       ''),
+                'customer_phone':         r.get('customer_phone',      ''),
+                'total_reports':          r.get('TotalProblems',        0) or 0,
+                'resolved':               r.get('Resolved',             0) or 0,
+                'unresolved':             r.get('Unresolved',           0) or 0,
+                'avg_resolution_minutes': round(r.get('Avg_Resolution_Time', 0) or 0) or None,
+            }
+            for r in raw
+        ]
         if search:
-            search_clause = f" AND (c.customer_name LIKE N'%{search}%' OR c.customer_phone LIKE N'%{search}%')"
-        cursor.execute(f"""
-            SELECT c.customer_id, c.customer_name, c.customer_phone,
-                   COUNT(r.id) AS total_reports,
-                   SUM(CASE WHEN r.classification LIKE N'تم حل%' THEN 1 ELSE 0 END) AS resolved,
-                   SUM(CASE WHEN r.classification LIKE N'لم يتم%' THEN 1 ELSE 0 END) AS unresolved,
-                   AVG(CAST(r.resolution_minutes AS FLOAT)) AS avg_resolution_minutes
-            FROM customer_detail_by_A c
-            LEFT JOIN Customer_service_reports_by_A r
-                   ON c.customer_id = r.customer_id
-                   AND r.resolved_date >= {date_from.replace('-','')}
-                   AND r.resolved_date <= {date_to.replace('-','')}
-            WHERE 1=1{search_clause}
-            GROUP BY c.customer_id, c.customer_name, c.customer_phone
-            ORDER BY total_reports DESC
-        """)
-        customers = cursor.fetchall()
+            customers = [c for c in customers if search in c['customer_name'] or search in c['customer_phone']]
         conn.close()
     except Exception:
         customers = []
