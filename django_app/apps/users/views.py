@@ -79,7 +79,7 @@ def login_view(request):
                 conn   = get_connection()
                 cursor = conn.cursor()
                 cursor.execute(
-                    "SELECT user_id, name, phone FROM users_Details_byA WHERE user_id = %s AND user_type = 2",
+                    "SELECT user_id, user_name, phone FROM users_Details_byA WHERE user_id = %s AND user_type = 2",
                     (username,)
                 )
                 row = cursor.fetchone()
