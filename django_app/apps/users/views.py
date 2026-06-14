@@ -59,6 +59,9 @@ def login_view(request):
         username = (request.POST.get('username') or request.POST.get('agent_id', '')).strip()
         password = request.POST.get('password', '').strip()
 
+        import logging
+        log = logging.getLogger(__name__)
+
         user = authenticate(request, username=username, password=password)
 
         if not user:
@@ -74,39 +77,27 @@ def login_view(request):
                 conn   = get_connection()
                 cursor = conn.cursor()
                 cursor.execute(
-                    "SELECT user_id, name FROM users_Details_byA WHERE user_id = %s AND user_type = 2",
+                    "SELECT user_id, name, phone FROM users_Details_byA WHERE user_id = %s AND user_type = 2",
                     (username,)
                 )
                 row = cursor.fetchone()
                 conn.close()
 
                 if row:
-                    sql_id   = str(row[0]).strip()
-                    sql_name = (row[1] or '').strip()
-
-                    # جيب الـ hash المحفوظ في phone لو موجود
-                    try:
-                        conn2   = get_connection()
-                        cursor2 = conn2.cursor()
-                        cursor2.execute(
-                            "SELECT phone FROM users_Details_byA WHERE user_id = %s",
-                            (sql_id,)
-                        )
-                        phone_row = cursor2.fetchone()
-                        conn2.close()
-                        saved_hash = phone_row[0].strip() if phone_row and phone_row[0] else None
-                    except Exception:
-                        saved_hash = None
+                    sql_id     = str(row[0]).strip()
+                    sql_name   = (row[1] or '').strip()
+                    saved_hash = row[2].strip() if row[2] else None
 
                     from django.contrib.auth.hashers import is_password_usable
+
                     if saved_hash and is_password_usable(saved_hash):
-                        # عنده باسورد محفوظة → استخدمها
+                        # عنده باسورد محفوظة من قبل → استخدمها
                         new_user          = User(username=sql_id, first_name=sql_name)
                         new_user.password = saved_hash
                         new_user.save()
                         is_first = False
                     else:
-                        # أول مرة → باسورد = ID
+                        # أول مرة خالص → باسورد = ID
                         new_user = User.objects.create_user(
                             username=sql_id,
                             password=sql_id,
@@ -114,16 +105,16 @@ def login_view(request):
                         )
                         # احفظ الـ hash في SQL
                         try:
-                            conn3   = get_connection()
-                            cursor3 = conn3.cursor()
-                            cursor3.execute(
+                            conn2   = get_connection()
+                            cursor2 = conn2.cursor()
+                            cursor2.execute(
                                 "UPDATE users_Details_byA SET phone = %s WHERE user_id = %s",
                                 (new_user.password, sql_id)
                             )
-                            conn3.commit()
-                            conn3.close()
-                        except Exception:
-                            pass
+                            conn2.commit()
+                            conn2.close()
+                        except Exception as e:
+                            log.warning("فشل حفظ الـ hash في SQL: %s", e)
                         is_first = True
 
                     UserProfile.objects.create(
@@ -133,11 +124,20 @@ def login_view(request):
                         role='agent',
                         is_first_login=is_first,
                     )
-                    user = authenticate(request, username=sql_id, password=password)
-                    if not user:
-                        messages.error(request, 'كلمة المرور غير صحيحة — كلمة المرور الافتراضية هي الـ ID الخاص بك')
-            except Exception:
-                pass
+
+                    # الباسورد الصح دايماً = الـ ID في أول دخول
+                    user = authenticate(request, username=sql_id, password=sql_id)
+                    if user:
+                        login(request, user)
+                        return redirect('change_password')
+                    else:
+                        log.error("authenticate فشلت بعد create_user للـ ID: %s", sql_id)
+                        messages.error(request, 'حدث خطأ أثناء تسجيل الدخول، حاول مرة أخرى')
+                else:
+                    log.info("ID %s مش موجود في SQL أو user_type مش 2", username)
+
+            except Exception as e:
+                log.error("خطأ في SQL أثناء auto-register: %s", e, exc_info=True)
 
         if user:
             login(request, user)
