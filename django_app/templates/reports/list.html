@@ -192,6 +192,59 @@
   .btn-apply-filter:hover {
     background: #3b5fe8;
   }
+
+  /* ── Pagination ── */
+  .pagination-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 20px 0 8px;
+    flex-wrap: wrap;
+  }
+
+  .page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'Cairo', sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+
+  .page-btn:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .page-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    font-weight: 700;
+    pointer-events: none;
+  }
+
+  .page-btn.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .page-info {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0 8px;
+  }
 </style>
 {% endblock %}
 
@@ -269,7 +322,7 @@
 </form>
 
 <div class="card">
-  <div class="section-title">{{ data|length }} <span data-ar="نتيجة" data-en="results">نتيجة</span></div>
+  <div class="section-title">{{ total_count }} <span data-ar="نتيجة" data-en="results">نتيجة</span></div>
   <div class="table-wrap">
     <table>
       <thead>
@@ -289,7 +342,7 @@
       <tbody>
         {% for r in data %}
         <tr>
-          <td><span class="badge badge-blue"># {{ r.conv_id }}</span></td>
+          <td><span class="badge badge-blue">{{ r.conv_id }}</span></td>
           <td>{{ r.customer_name }}</td>
           <td style="direction:ltr;font-size:13px">{{ r.customer_phone }}</td>
           <td>{{ r.agent_name }}</td>
@@ -335,6 +388,46 @@
       </tbody>
     </table>
   </div>
+
+  {% if data.has_other_pages %}
+  <div class="pagination-wrap">
+    {% if data.has_previous %}
+    <a class="page-btn" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ data.previous_page_number }}">
+      <i class="fa-solid fa-chevron-right"></i>
+    </a>
+    {% else %}
+    <span class="page-btn disabled"><i class="fa-solid fa-chevron-right"></i></span>
+    {% endif %}
+
+    {% for num in page_range %}
+      {% if num %}
+        {% if data.number == num %}
+          <span class="page-btn active">{{ num }}</span>
+        {% else %}
+          <a class="page-btn" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+        {% endif %}
+      {% else %}
+        <span class="page-btn disabled" style="border:none;background:none;min-width:20px;">…</span>
+      {% endif %}
+    {% endfor %}
+
+    {% if data.has_next %}
+    <a class="page-btn" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ data.next_page_number }}">
+      <i class="fa-solid fa-chevron-left"></i>
+    </a>
+    {% else %}
+    <span class="page-btn disabled"><i class="fa-solid fa-chevron-left"></i></span>
+    {% endif %}
+
+    <span class="page-info">
+      <span data-ar="صفحة" data-en="Page">صفحة</span>
+      {{ data.number }}
+      <span data-ar="من" data-en="of">من</span>
+      {{ data.paginator.num_pages }}
+    </span>
+  </div>
+  {% endif %}
+
 </div>
 {% endblock %}
 

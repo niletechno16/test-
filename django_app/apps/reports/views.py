@@ -12,6 +12,19 @@ ARABIC_MONTHS = {
 }
 
 
+def _build_page_range(page_obj):
+    """بتبني قائمة أرقام الصفحات مع None للـ '...' بين الأرقام البعيدة"""
+    current = page_obj.number
+    total   = page_obj.paginator.num_pages
+    pages   = []
+    for n in range(1, total + 1):
+        if n == 1 or n == total or (current - 2 <= n <= current + 2):
+            pages.append(n)
+        elif pages and pages[-1] is not None:
+            pages.append(None)  # يمثل الـ ...
+    return pages
+
+
 def _resolve_filter(request, today):
     default_from = today.replace(day=1).strftime('%Y-%m-%d')
     last_day     = calendar.monthrange(today.year, today.month)[1]
@@ -77,7 +90,8 @@ def reports_list(request):
         paginator = Paginator(data, 30)
         page_number = request.GET.get('page', 1)
         page_obj = paginator.get_page(page_number)
-        return render(request, 'reports/list.html', {**base_ctx, 'data': page_obj, 'agents': agents, 'is_manager': True, 'total_count': len(data)})
+        page_range = _build_page_range(page_obj)
+        return render(request, 'reports/list.html', {**base_ctx, 'data': page_obj, 'agents': agents, 'is_manager': True, 'total_count': len(data), 'page_range': page_range})
 
     try:
         conn   = get_connection()
@@ -124,8 +138,9 @@ def reports_list(request):
     paginator = Paginator(data, 30)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
+    page_range = _build_page_range(page_obj)
 
-    return render(request, 'reports/list.html', {**base_ctx, 'data': page_obj, 'agents': agents, 'total_count': total_count})
+    return render(request, 'reports/list.html', {**base_ctx, 'data': page_obj, 'agents': agents, 'total_count': total_count, 'page_range': page_range})
 
 
 @login_required
