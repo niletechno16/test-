@@ -106,8 +106,7 @@ def reports_list(request):
         if not is_manager_level(request.user):
             current = request.user.first_name or request.user.username
             data = [r for r in data if r['agent_name'] == current]
-        # جيب قائمة الأجنتات للفلتر
-        cursor.nextset()
+        # جيب قائمة الأجنتات من الداتا نفسها
         agents = []
         if is_manager_level(request.user):
             agents = sorted(set(r['agent_name'] for r in data if r['agent_name']))
