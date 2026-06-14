@@ -125,14 +125,17 @@ def login_view(request):
                         is_first_login=is_first,
                     )
 
-                    # الباسورد الصح دايماً = الـ ID في أول دخول
-                    user = authenticate(request, username=sql_id, password=sql_id)
+                    # أول مرة → باسورد = ID، رجع تاني → باسورد = اللي كتبه اليوزر
+                    login_password = sql_id if is_first else password
+                    user = authenticate(request, username=sql_id, password=login_password)
                     if user:
                         login(request, user)
-                        return redirect('change_password')
+                        if is_first:
+                            return redirect('change_password')
+                        return redirect('home')
                     else:
-                        log.error("authenticate فشلت بعد create_user للـ ID: %s", sql_id)
-                        messages.error(request, 'حدث خطأ أثناء تسجيل الدخول، حاول مرة أخرى')
+                        log.error("authenticate فشلت للـ ID: %s", sql_id)
+                        messages.error(request, 'اسم المستخدم أو كلمة المرور غير صحيحة')
                 else:
                     log.info("ID %s مش موجود في SQL أو user_type مش 2", username)
 
