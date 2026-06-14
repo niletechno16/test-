@@ -101,24 +101,27 @@ def agents_list(request):
     try:
         conn   = get_connection()
         cursor = conn.cursor(as_dict=True)
-        where = "WHERE 1=1"
-        if not is_manager_level(request.user):
-            where += f" AND agent_name = '{request.user.first_name or request.user.username}'"
+        cursor.execute(
+            "EXEC Top_Agent_resolved_byA @FromDate = %s, @ToDate = %s",
+            (date_from, date_to)
+        )
+        raw = cursor.fetchall() or []
+        agents = [
+            {
+                'agent_id':               r.get('agent_id',          ''),
+                'agent_name':             r.get('agent_name',         ''),
+                'total':                  r.get('TotalProblems',       0) or 0,
+                'resolved':               r.get('Resolved',            0) or 0,
+                'unresolved':             r.get('Unresolved',          0) or 0,
+                'avg_resolution_minutes': round(r.get('Avg_Resolution_Time', 0) or 0) or None,
+            }
+            for r in raw
+        ]
         if search:
-            where += f" AND agent_name LIKE N'%{search}%'"
-        if date_from:
-            where += f" AND resolved_date >= {date_from.replace('-', '')}"
-        if date_to:
-            where += f" AND resolved_date <= {date_to.replace('-', '')}"
-        cursor.execute(f"""
-            SELECT agent_id, agent_name, COUNT(*) AS total,
-                   SUM(CASE WHEN classification LIKE N'تم حل%' THEN 1 ELSE 0 END) AS resolved,
-                   SUM(CASE WHEN classification LIKE N'لم يتم%' THEN 1 ELSE 0 END) AS unresolved,
-                   AVG(CAST(resolution_minutes AS FLOAT)) AS avg_resolution_minutes
-            FROM Customer_service_reports_by_A {where}
-            GROUP BY agent_id, agent_name ORDER BY total DESC
-        """)
-        agents = cursor.fetchall()
+            agents = [a for a in agents if search in a['agent_name']]
+        if not is_manager_level(request.user):
+            current = request.user.first_name or request.user.username
+            agents = [a for a in agents if a['agent_name'] == current]
         conn.close()
     except Exception:
         agents = []
