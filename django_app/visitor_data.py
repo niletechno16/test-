@@ -60,9 +60,9 @@ def _build_base_data(agent_names, customer_names, year):
                 'agent_id':          agent_idx + 1,
                 'classification':    classification,
                 'summary':           summary,
-                'resolved_date':     int(report_date.strftime('%Y%m%d')),
+                'resolve_date':      report_date.strftime('%Y-%m-%d'),
                 'resolved_time':     f"{hour_12:02d}:{minute:02d} {ampm}",
-                'created_at':        report_date.strftime('%Y-%m-%d'),
+                'resolved_date':     int(report_date.strftime('%Y%m%d')),  # للفلترة الداخلية
                 'resolution_minutes': resolution_minutes,
                 'status_label':       'Resolved' if resolved else 'Unresolved',
             })
@@ -101,9 +101,9 @@ def _build_extra_days(agent_names, customer_names, from_date, to_date, id_start)
                     'agent_id':           agent_idx + 1,
                     'classification':     f"تم حل مشكلة: {problem}" if resolved else f"لم يتم حل مشكلة: {problem}",
                     'summary':            f"تواصل العميل بخصوص {problem}. {'تم حل المشكلة بنجاح.' if resolved else 'المشكلة قيد المتابعة.'}",
-                    'resolved_date':      int(cur.strftime('%Y%m%d')),
+                    'resolve_date':       cur.strftime('%Y-%m-%d'),
                     'resolved_time':      f"{hour_12:02d}:{minute:02d} {ampm}",
-                    'created_at':         cur.strftime('%Y-%m-%d'),
+                    'resolved_date':      int(cur.strftime('%Y%m%d')),  # للفلترة الداخلية
                     'resolution_minutes': rng.randint(5, 120),
                     'status_label':       'Resolved' if resolved else 'Unresolved',
                 })
