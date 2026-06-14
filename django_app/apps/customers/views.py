@@ -159,15 +159,36 @@ def customer_detail(request, customer_id):
     try:
         conn   = get_connection()
         cursor = conn.cursor(as_dict=True)
-        cursor.execute(f"SELECT * FROM customer_detail_by_A WHERE customer_id = {customer_id}")
-        customer = cursor.fetchone()
-        where = f"WHERE customer_id = {customer_id}"
-        if date_from:
-            where += f" AND resolved_date >= {date_from.replace('-', '')}"
-        if date_to:
-            where += f" AND resolved_date <= {date_to.replace('-', '')}"
-        cursor.execute(f"SELECT * FROM Customer_service_reports_by_A {where} ORDER BY resolved_date DESC, resolved_time DESC")
-        reports = cursor.fetchall()
+        cursor.execute(
+            "EXEC Get_Reports_byA @FromDate = %s, @ToDate = %s",
+            (date_from, date_to)
+        )
+        raw = cursor.fetchall() or []
+        all_reports = [
+            {
+                'conv_id':            r.get('conv_id',           ''),
+                'agent_id':           r.get('agent_id',          ''),
+                'agent_name':         r.get('agent_name',        ''),
+                'customer_id':        r.get('customer_id',       ''),
+                'customer_name':      r.get('customer_name',     ''),
+                'customer_phone':     r.get('customer_phone',    ''),
+                'classification':     r.get('classification',    ''),
+                'summary':            r.get('summary',           ''),
+                'resolution_minutes': r.get('resolution_minutes', None),
+                'resolve_date':       r.get('resolve_date',      ''),
+                'resolved_time':      r.get('resolve_time',      ''),
+                'status_label':       r.get('status_label',      ''),
+            }
+            for r in raw
+        ]
+        # فلتر على الكاستومر ID
+        customer_rows = [r for r in all_reports if str(r['customer_id']) == str(customer_id)]
+        customer = {
+            'customer_id':   customer_id,
+            'customer_name': customer_rows[0]['customer_name'] if customer_rows else '',
+            'customer_phone': customer_rows[0]['customer_phone'] if customer_rows else '',
+        } if customer_rows else None
+        reports = customer_rows
         conn.close()
     except Exception:
         customer, reports = None, []

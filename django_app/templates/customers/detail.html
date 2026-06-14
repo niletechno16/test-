@@ -202,6 +202,7 @@
                     <th data-ar="الوقت" data-en="Time">الوقت</th>
                     <th data-ar="وقت الحل" data-en="Resolution Time">وقت الحل</th>
                     <th data-ar="الملخص" data-en="Summary">الملخص</th>
+                    <th data-ar="الحالة" data-en="Status">الحالة</th>
                 </tr>
             </thead>
             <tbody>
@@ -209,30 +210,28 @@
                 <tr>
                     <td><span class="badge badge-blue"># {{ r.conv_id }}</span></td>
                     <td>{{ r.agent_name }}</td>
-                    <td>
-                        {% if 'تم' in r.classification %}
-                        <span class="badge badge-green">{{ r.classification }}</span>
-                        {% elif 'لم يتم' in r.classification %}
-                        <span class="badge badge-red">{{ r.classification }}</span>
-                        {% else %}
-                        <span class="badge badge-yellow">{{ r.classification }}</span>
-                        {% endif %}
-                    </td>
-                    <td>{% if r.resolved_date %}{% with d=r.resolved_date|stringformat:"s" %}{{ d|slice:"6:8" }}/{{ d|slice:"4:6" }}/{{ d|slice:":4" }}{% endwith %}{% endif %}</td>
+                    <td><span class="badge badge-yellow">{{ r.classification }}</span></td>
+                    <td>{{ r.resolve_date }}</td>
                     <td>{{ r.resolved_time }}</td>
                     <td>
                         {% if r.resolution_minutes %}
-                        <span style="font-size:13px;font-weight:600;color:var(--blue)">{{ r.resolution_minutes }} <span
-                                data-ar="د" data-en="min">د</span></span>
+                        <span style="font-size:13px;font-weight:600;color:var(--blue)">{{ r.resolution_minutes }} <span data-ar="د" data-en="min">د</span></span>
                         {% else %}
                         <span style="color:var(--muted);font-size:12px">—</span>
                         {% endif %}
                     </td>
                     <td style="max-width:300px;color:var(--muted);font-size:13px">{{ r.summary|truncatechars:80 }}</td>
+                    <td>
+                        {% if r.status_label == 'Resolved' %}
+                        <span class="badge badge-green">Resolved</span>
+                        {% else %}
+                        <span class="badge badge-red">Unresolved</span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" style="text-align:center;color:var(--muted);padding:30px" data-ar="لا توجد محادثات"
+                    <td colspan="8" style="text-align:center;color:var(--muted);padding:30px" data-ar="لا توجد محادثات"
                         data-en="No conversations">لا توجد محادثات</td>
                 </tr>
                 {% endfor %}
