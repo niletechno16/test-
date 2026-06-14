@@ -247,6 +247,21 @@ def home(request):
         ]
         cursor.nextset()
 
+        # ── 5. Traffic by Date ──
+        cursor.execute(
+            "EXEC sp_TrafficByDate_bya @FromDate = %s, @ToDate = %s",
+            (date_from, date_to)
+        )
+        raw_traffic = cursor.fetchall() or []
+        traffic_by_date = [
+            {
+                'date':  f"{str(r['resolve_date'])[6:8]}/{str(r['resolve_date'])[4:6]}/{str(r['resolve_date'])[:4]}",
+                'count': r.get('total', 0) or 0,
+            }
+            for r in raw_traffic
+        ]
+        cursor.nextset()
+
         conn.close()
 
         return render(request, 'dashboard/home.html', {
@@ -260,7 +275,7 @@ def home(request):
             'common_problems':         common_problems,
             'resolved_pct':            resolved_pct,
             'unresolved_pct':          unresolved_pct,
-            'traffic_by_date':         [],
+            'traffic_by_date':         traffic_by_date,
             'avg_resolution_overall':  avg_resolution_overall,
             'avg_resolution_by_agent': avg_resolution_by_agent,
         })
