@@ -18,7 +18,7 @@ def is_high_level(user):
     return get_role(user) in ['developer', 'owner']
 
 def is_manager_level(user):
-    return get_role(user) in ['developer', 'owner', 'admin']
+    return get_role(user) in ['developer', 'owner', 'admin', 'agent']
 
 def can_change_role(changer, target_role):
     changer_role = get_role(changer)
