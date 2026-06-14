@@ -64,6 +64,7 @@ def _build_base_data(agent_names, customer_names, year):
                 'resolved_time':     f"{hour_12:02d}:{minute:02d} {ampm}",
                 'created_at':        report_date.strftime('%Y-%m-%d'),
                 'resolution_minutes': resolution_minutes,
+                'status_label':       'Resolved' if resolved else 'Unresolved',
             })
             report_id += 1
 
@@ -104,6 +105,7 @@ def _build_extra_days(agent_names, customer_names, from_date, to_date, id_start)
                     'resolved_time':      f"{hour_12:02d}:{minute:02d} {ampm}",
                     'created_at':         cur.strftime('%Y-%m-%d'),
                     'resolution_minutes': rng.randint(5, 120),
+                    'status_label':       'Resolved' if resolved else 'Unresolved',
                 })
                 report_id += 1
         cur += timedelta(days=1)
