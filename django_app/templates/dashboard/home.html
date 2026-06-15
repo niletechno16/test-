@@ -515,18 +515,9 @@
         },
     options: {
         responsive: true, maintainAspectRatio: true,
-        plugins: {
+            plugins: {
             legend: { display: false },
-            datalabels: {
-                anchor: 'center',
-                align: 'center',
-                color: '#ffffff',
-                font: { family: 'Cairo', size: 13, weight: '900' },
-                textShadowBlur: 4,
-                textShadowColor: 'rgba(0,0,0,0.6)',
-                formatter: v => v > 0 ? v : '',
-                clip: false,
-            },
+            ...barLabelPlugin,
         },
         scales: {
             y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
