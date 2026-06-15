@@ -276,6 +276,7 @@
       <input type="hidden" name="filter_mode" value="monthyear">
       {% if is_manager and filters.agent %}<input type="hidden" name="agent" value="{{ filters.agent }}">{% endif %}
       {% if filters.classification %}<input type="hidden" name="classification" value="{{ filters.classification }}">{% endif %}
+      {% if filters.customer_name %}<input type="hidden" name="customer_name" value="{{ filters.customer_name }}">{% endif %}
       <label data-ar="الشهر" data-en="Month">الشهر</label>
       <input type="month" name="month_year" value="{{ filter_month_year|default:'' }}">
       <button type="submit" class="btn-apply-filter"><i class="fa-solid fa-filter"></i> <span data-ar="تطبيق"
@@ -286,6 +287,7 @@
       <input type="hidden" name="filter_mode" value="exact">
       {% if is_manager and filters.agent %}<input type="hidden" name="agent" value="{{ filters.agent }}">{% endif %}
       {% if filters.classification %}<input type="hidden" name="classification" value="{{ filters.classification }}">{% endif %}
+      {% if filters.customer_name %}<input type="hidden" name="customer_name" value="{{ filters.customer_name }}">{% endif %}
       <label data-ar="من" data-en="From">من</label>
       <input type="date" name="from" value="{{ filters.from }}">
       <label data-ar="إلى" data-en="To">إلى</label>
@@ -304,6 +306,7 @@
   <input type="hidden" name="from" value="{{ filters.from }}">
   <input type="hidden" name="to" value="{{ filters.to }}">
   {% endif %}
+  {% if filters.customer_name %}<input type="hidden" name="customer_name" value="{{ filters.customer_name }}">{% endif %}
   <div class="filters-bar">
     {% if is_manager %}
     <select class="select-input" name="agent">
@@ -316,6 +319,12 @@
     <input class="search-input" type="text" name="classification" placeholder="فلتر بالتصنيف..."
       data-ar-placeholder="فلتر بالتصنيف..." data-en-placeholder="Filter by classification..."
       value="{{ filters.classification }}" style="min-width:180px">
+    {% if filters.customer_name %}
+    <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.4);color:#a78bfa;border-radius:6px;padding:4px 10px;font-size:13px;white-space:nowrap;">
+      <i class="fa-solid fa-user"></i> {{ filters.customer_name }}
+      <a href="{% url 'reports_list' %}?filter_mode={{ filter_mode }}&month_year={{ filter_month_year }}&from={{ filters.from }}&to={{ filters.to }}&agent={{ filters.agent }}&classification={{ filters.classification }}" style="color:inherit;margin-right:2px;" title="مسح فلتر العميل"><i class="fa-solid fa-xmark"></i></a>
+    </span>
+    {% endif %}
     <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> <span data-ar="فلتر"
         data-en="Filter">فلتر</span></button>
     <a href="{% url 'reports_list' %}" class="btn btn-ghost"><i class="fa-solid fa-xmark"></i> <span data-ar="مسح"

@@ -149,6 +149,12 @@
         align-items: center;
         gap: 10px;
         font-size: 15px;
+        border-radius: 6px;
+        padding: 4px 6px;
+        transition: background 0.15s;
+    }
+    .problems-list li:hover {
+        background: var(--surface2);
     }
 
     .problems-list .rank {
@@ -358,7 +364,7 @@
         <div class="pie-wrap">
             <canvas id="pieChart"></canvas>
             <div class="pie-legend">
-                <div class="pie-legend-item">
+                <div class="pie-legend-item" style="cursor:pointer" onclick="goReports('classification', 'تم حل')">
                     <div class="pie-legend-dot" style="background:var(--green)"></div>
                     <div>
                         <div style="font-weight:700;font-size:18px;color:var(--green)">{{ resolved_pct }}%</div>
@@ -366,7 +372,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="pie-legend-item">
+                <div class="pie-legend-item" style="cursor:pointer" onclick="goReports('classification', 'لم يتم')">
                     <div class="pie-legend-dot" style="background:var(--red)"></div>
                     <div>
                         <div style="font-weight:700;font-size:18px;color:var(--red)">{{ unresolved_pct }}%</div>
@@ -393,7 +399,7 @@
             {% if common_problems %}
             {% with max_val=common_problems.0.total %}
             {% for p in common_problems %}
-            <li>
+            <li style="cursor:pointer" onclick="goReports('classification', '{{ p.classification|escapejs }}')" title="اضغط لعرض التقارير">
                 <span class="rank">{{ forloop.counter }}</span>
                 <span class="prob-text" title="{{ p.classification }}">{{ p.classification }}</span>
                 <div class="prob-bar-wrap">
@@ -494,10 +500,11 @@
     };
 
     // Agents Bar
+    const agentsLabels = [{% for a in top_agents_resolved %}"{{ a.agent_name }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
     new Chart(document.getElementById('agentsChart'), {
         type: 'bar',
         data: {
-            labels: [{% for a in top_agents_resolved %}"{{ a.agent_name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+            labels: agentsLabels,
         datasets: [
         {
             label: 'محلول',
@@ -529,15 +536,31 @@
         scales: {
             y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 }, grace: '15%' },
             x: { grid: { display: false }, border: { display: false }, ...xAxisWrap }
-        }
+        },
+        onClick(evt, elements) {
+            if (!elements.length) return;
+            const agentName = agentsLabels[elements[0].index];
+            const datasetIdx = elements[0].datasetIndex;
+            const classParam = datasetIdx === 0 ? 'تم حل' : 'لم يتم';
+            const p = new URLSearchParams();
+            p.set('filter_mode', '{{ filter_mode }}');
+            {% if filter_month_year %}p.set('month_year', '{{ filter_month_year }}');{% endif %}
+            p.set('from', '{{ date_from }}');
+            p.set('to',   '{{ date_to }}');
+            p.set('agent', agentName);
+            p.set('classification', classParam);
+            window.location.href = '/reports/?' + p.toString();
+        },
+        onHover(evt, el) { evt.native.target.style.cursor = el.length ? 'pointer' : 'default'; },
     }
     });
 
     // Customers Bar
+    const customersLabels = [{% for c in top_customers %}"{{ c.customer_name }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
     new Chart(document.getElementById('customersChart'), {
         type: 'bar',
         data: {
-            labels: [{% for c in top_customers %}"{{ c.customer_name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+            labels: customersLabels,
         datasets: [{
             label: 'عدد المحادثات',
             data: [{% for c in top_customers %}{{ c.total }}{% if not forloop.last %}, {% endif %} {% endfor %}],
@@ -558,7 +581,13 @@
         scales: {
             y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 }, grace: '15%' },
             x: { grid: { display: false }, border: { display: false }, ...xAxisWrap }
-        }
+        },
+        onClick(evt, elements) {
+            if (!elements.length) return;
+            const name = customersLabels[elements[0].index];
+            goReports('customer_name', name);
+        },
+        onHover(evt, el) { evt.native.target.style.cursor = el.length ? 'pointer' : 'default'; },
     }
     });
 
@@ -580,7 +609,13 @@
         plugins: {
             legend: { display: false },
             datalabels: { display: false },
-        }
+        },
+        onClick(evt, elements) {
+            if (!elements.length) return;
+            const classParam = elements[0].index === 0 ? 'تم حل' : 'لم يتم';
+            goReports('classification', classParam);
+        },
+        onHover(evt, el) { evt.native.target.style.cursor = el.length ? 'pointer' : 'default'; },
     }
 });
     // Agent Avg Resolution Bar
@@ -663,6 +698,17 @@
         }
     }
     });
+
+    // ── Navigation helper: روح لصفحة التقارير مع الفلاتر الحالية ──
+    function goReports(param, value) {
+        const p = new URLSearchParams();
+        p.set('filter_mode', '{{ filter_mode }}');
+        {% if filter_month_year %}p.set('month_year', '{{ filter_month_year }}');{% endif %}
+        p.set('from', '{{ date_from }}');
+        p.set('to',   '{{ date_to }}');
+        p.set(param, value);
+        window.location.href = '/reports/?' + p.toString();
+    }
 
     function switchFilterMode(mode) {
         var isMonthYear = mode === 'monthyear';
