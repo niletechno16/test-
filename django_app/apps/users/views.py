@@ -430,6 +430,10 @@ def check_resolved_api(request):
     """
     GET → يتحقق من تقارير الأيجنت الحالي ويولّد إشعارات resolved جديدة لو مش موجودة
     بيتعمله poll من base.html كل 60 ثانية — مش مرتبط بصفحة معينة
+
+    المنطق:
+    - أول استدعاء في الـ session → نسجّل الـ baseline (conv_ids الموجودة حالياً) ومنعملش إشعارات
+    - الاستدعاءات اللي بعدها → بس لو conv_id جديد مش في الـ baseline ومش في الـ DB
     """
     from .notifications import notify_resolved
     import datetime
@@ -447,6 +451,8 @@ def check_resolved_api(request):
     last_day   = cal.monthrange(today.year, today.month)[1]
     date_to    = today.replace(day=last_day).strftime('%Y-%m-%d')
 
+    session_key = f'resolved_baseline_{agent_id}'
+
     new_count = 0
     try:
         conn   = get_connection()
@@ -458,27 +464,49 @@ def check_resolved_api(request):
         raw = cursor.fetchall() or []
         conn.close()
 
+        # جيب كل conv_ids المحلولة حالياً
+        current_resolved = set()
         agent_name = None
+        names_map  = {}
         for r in raw:
             if str(r.get('agent_id', '')) != agent_id:
                 continue
             if not r.get('classification', '').startswith('تم حل'):
                 continue
-
-            conv_id    = str(r.get('conv_id', ''))
+            cid = str(r.get('conv_id', ''))
+            if cid:
+                current_resolved.add(cid)
             if not agent_name:
                 agent_name = r.get('agent_name', agent_id)
+            names_map[cid] = r.get('agent_name', agent_id)
 
-            # لو الإشعار ده اتبعت قبل كده → تجاهل
+        # أول استدعاء في الـ session → سجّل الـ baseline بس
+        if session_key not in request.session:
+            request.session[session_key] = list(current_resolved)
+            request.session.modified = True
+            return JsonResponse({'ok': True, 'new': 0, 'baseline': True})
+
+        baseline = set(request.session[session_key])
+
+        for conv_id in current_resolved:
+            # لو كان موجود في الـ baseline → قديم، تجاهل
+            if conv_id in baseline:
+                continue
+
+            # لو اتبعت إشعار قبل كده في الـ DB → تجاهل
             already = Notification.objects.filter(
                 notif_type='resolved',
                 agent_id=agent_id,
                 body__contains=conv_id,
-            ).exists() if conv_id else False
+            ).exists()
 
             if not already:
-                notify_resolved(agent_id, agent_name or agent_id, conv_id)
+                notify_resolved(agent_id, names_map.get(conv_id, agent_id), conv_id)
                 new_count += 1
+
+        # حدّث الـ baseline بالجديد عشان المرة الجاية
+        request.session[session_key] = list(current_resolved)
+        request.session.modified = True
 
     except Exception:
         pass
