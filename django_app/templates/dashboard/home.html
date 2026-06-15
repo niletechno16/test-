@@ -433,6 +433,7 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
     const chartDefaults = {
         color: '#8b91b0',
@@ -442,6 +443,21 @@
     Chart.defaults.font.family = chartDefaults.font.family;
 
     const gridColor = 'rgba(46,50,80,0.6)';
+
+    // تسجيل الـ datalabels plugin
+    Chart.register(ChartDataLabels);
+
+    // إعدادات مشتركة للـ labels فوق الأعمدة
+    const barLabelPlugin = {
+        datalabels: {
+            anchor: 'end',
+            align: 'end',
+            offset: 2,
+            color: '#c8d4e8',
+            font: { family: 'Cairo', size: 11, weight: '700' },
+            formatter: v => v > 0 ? v : '',
+        }
+    };
 
     // Agents Bar
     new Chart(document.getElementById('agentsChart'), {
@@ -472,7 +488,8 @@
     options: {
         responsive: true, maintainAspectRatio: true,
             plugins: {
-            legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 11 } } }
+            legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 11 } } },
+            ...barLabelPlugin,
         },
         scales: {
             y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
@@ -498,7 +515,10 @@
         },
     options: {
         responsive: true, maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
+            plugins: {
+            legend: { display: false },
+            ...barLabelPlugin,
+        },
         scales: {
             y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
             x: { grid: { display: false }, border: { display: false } }
@@ -521,7 +541,10 @@
         options: {
         responsive: true, maintainAspectRatio: true,
         cutout: '72%',
-        plugins: { legend: { display: false } }
+        plugins: {
+            legend: { display: false },
+            datalabels: { display: false },
+        }
     }
 });
     // Agent Avg Resolution Bar
@@ -541,7 +564,17 @@
         },
     options: {
         responsive: true, maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
+            plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'end',
+                offset: 2,
+                color: '#fbbf24',
+                font: { family: 'Cairo', size: 11, weight: '700' },
+                formatter: v => v > 0 ? v + ' د' : '',
+            },
+        },
         scales: {
             y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 10 } },
             x: { grid: { display: false }, border: { display: false } }
@@ -569,7 +602,10 @@
         },
     options: {
         responsive: true, maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
+            plugins: {
+                legend: { display: false },
+                datalabels: { display: false },
+            },
         scales: {
             y: {
                 grid: { display: false },
