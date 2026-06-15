@@ -3,7 +3,9 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .models import UserProfile
+from django.http import JsonResponse
+from .models import UserProfile, Notification
+from .notifications import notify_login, notify_password_changed
 from db_connection import get_connection
 
 
@@ -90,21 +92,18 @@ def login_view(request):
                     sql_name   = (row[1] or '').strip()
                     saved_hash = row[2].strip() if row[2] else None
 
-                    # جيب أو أنشئ الـ Django User
                     try:
                         dj_user = User.objects.get(username=sql_id)
                     except User.DoesNotExist:
                         dj_user = None
 
                     if saved_hash and is_password_usable(saved_hash):
-                        # فيه hash محفوظ → حدّث الباسورد في Django منه (زي setup_admins)
                         if dj_user is None:
                             dj_user = User(username=sql_id, first_name=sql_name)
                         dj_user.password = saved_hash
                         dj_user.save()
                         is_first = False
                     else:
-                        # أول مرة خالص → باسورد = ID
                         if dj_user is None:
                             dj_user = User.objects.create_user(
                                 username=sql_id,
@@ -114,7 +113,6 @@ def login_view(request):
                         else:
                             dj_user.set_password(sql_id)
                             dj_user.save()
-                        # احفظ الـ hash في SQL
                         try:
                             conn2   = get_connection()
                             cursor2 = conn2.cursor()
@@ -128,7 +126,6 @@ def login_view(request):
                             log.warning("فشل حفظ الـ hash في SQL: %s", e)
                         is_first = True
 
-                    # أنشئ أو حدّث الـ UserProfile
                     profile, _ = UserProfile.objects.get_or_create(
                         agent_id=sql_id,
                         defaults={
@@ -139,11 +136,12 @@ def login_view(request):
                         }
                     )
 
-                    # authenticate بالباسورد الصح
                     login_password = sql_id if is_first else password
                     user = authenticate(request, username=sql_id, password=login_password)
                     if user:
                         login(request, user)
+                        if user.profile.role != 'visitor':
+                            notify_login(user)
                         if is_first:
                             return redirect('change_password')
                         return redirect('home')
@@ -158,6 +156,8 @@ def login_view(request):
 
         if user:
             login(request, user)
+            if user.profile.role != 'visitor':
+                notify_login(user)
             if user.profile.is_first_login:
                 return redirect('change_password')
             return redirect('home')
@@ -185,10 +185,8 @@ def change_password(request):
             error = True
 
         if not error:
-            # حفظ الباسورد
             request.user.set_password(new_password)
 
-            # حفظ الإيميل لو اتحط
             if email:
                 if User.objects.filter(email=email).exclude(pk=request.user.pk).exists():
                     messages.error(request, 'هذا الإيميل مستخدم بالفعل')
@@ -202,9 +200,8 @@ def change_password(request):
             request.user.profile.save()
             update_session_auth_hash(request, request.user)
 
-            # حفظ الـ password hash في SQL Server عشان يتستعاد بعد أي deploy
+            # حفظ الـ hash الجديد في SQL Server
             try:
-                from db_connection import get_connection
                 conn   = get_connection()
                 cursor = conn.cursor()
                 cursor.execute(
@@ -214,7 +211,10 @@ def change_password(request):
                 conn.commit()
                 conn.close()
             except Exception:
-                pass  # مش هيكسر حاجة لو فشل
+                pass
+
+            # إشعار تغيير الباسورد
+            notify_password_changed(request.user)
 
             messages.success(request, 'تم تغيير كلمة المرور بنجاح')
             return redirect('home')
@@ -228,11 +228,107 @@ def change_password(request):
 # ---------------- PROFILE ----------------
 @login_required
 def profile(request):
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        # ── تغيير الباسورد من صفحة البروفايل ──
+        if action == 'change_password':
+            old_password = request.POST.get('old_password', '').strip()
+            new_password = request.POST.get('new_password', '').strip()
+            confirm      = request.POST.get('confirm_password', '').strip()
+
+            if not request.user.check_password(old_password):
+                messages.error(request, 'كلمة المرور الحالية غير صحيحة')
+            elif new_password != confirm:
+                messages.error(request, 'كلمات المرور الجديدة غير متطابقة')
+            elif len(new_password) < 6:
+                messages.error(request, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل')
+            else:
+                request.user.set_password(new_password)
+                request.user.save()
+                update_session_auth_hash(request, request.user)
+
+                # ✅ تحديث الـ hash في SQL Server في عمود phone
+                try:
+                    conn   = get_connection()
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "UPDATE users_Details_byA SET phone = %s WHERE user_id = %s",
+                        (request.user.password, request.user.profile.agent_id)
+                    )
+                    conn.commit()
+                    conn.close()
+                except Exception:
+                    pass
+
+                # إشعار تغيير الباسورد
+                notify_password_changed(request.user)
+
+                messages.success(request, 'تم تغيير كلمة المرور بنجاح ✅')
+                return redirect('profile')
+
+        # ── تغيير الإيميل ──
+        elif action == 'change_email':
+            new_email = request.POST.get('new_email', '').strip()
+            if new_email:
+                if User.objects.filter(email=new_email).exclude(pk=request.user.pk).exists():
+                    messages.error(request, 'هذا الإيميل مستخدم بالفعل')
+                else:
+                    request.user.email = new_email
+                    request.user.save()
+                    messages.success(request, 'تم تحديث البريد الإلكتروني ✅')
+            return redirect('profile')
+
     return render(request, 'users/profile.html', {
         'role':       get_role(request.user),
         'is_manager': is_manager_level(request.user),
         'agent_id':   request.user.profile.agent_id,
     })
+
+
+# ---------------- NOTIFICATIONS API (محمية - server side فقط) ----------------
+@login_required
+def notifications_api(request):
+    """
+    GET  → جيب الإشعارات الجديدة (مش مقروءة) للـ user الحالي
+    POST → mark as read
+    البيانات بتيجي من السيرفر مباشرة — مش في HTML مشفر
+    """
+    if request.method == 'POST':
+        notif_id = request.POST.get('id')
+        if notif_id:
+            Notification.objects.filter(
+                id=notif_id, recipient=request.user
+            ).update(is_read=True)
+        else:
+            # mark all as read
+            Notification.objects.filter(
+                recipient=request.user, is_read=False
+            ).update(is_read=True)
+        return JsonResponse({'ok': True})
+
+    # GET → إرجع الإشعارات للـ user ده بس
+    notifs = Notification.objects.filter(
+        recipient=request.user
+    ).order_by('-created_at')[:30]
+
+    unread_count = Notification.objects.filter(
+        recipient=request.user, is_read=False
+    ).count()
+
+    data = []
+    for n in notifs:
+        data.append({
+            'id':         n.id,
+            'type':       n.notif_type,
+            'title':      n.title,
+            'body':       n.body,
+            'is_read':    n.is_read,
+            'agent_id':   n.agent_id,
+            'created_at': n.created_at.strftime('%Y-%m-%d %H:%M'),
+        })
+
+    return JsonResponse({'notifications': data, 'unread_count': unread_count})
 
 
 # ---------------- MANAGE USERS ----------------
@@ -241,7 +337,6 @@ def manage_users(request):
     if not is_high_level(request.user):
         return redirect('home')
 
-    # ── جيب الـ IDs اللي user_type = 2 من SQL Server ──
     sql_users = []
     try:
         conn = get_connection()
@@ -254,7 +349,6 @@ def manage_users(request):
         rows = cursor.fetchall()
         conn.close()
 
-        # اللي مسجلين في Django بالفعل
         registered_ids = set(
             UserProfile.objects.exclude(role='visitor')
                                .values_list('agent_id', flat=True)
@@ -272,7 +366,6 @@ def manage_users(request):
     except Exception as e:
         messages.error(request, f'خطأ في الاتصال بقاعدة البيانات: {e}')
 
-    # ── إضافة يوزر من القائمة ──
     if request.method == 'POST':
         agent_id  = request.POST.get('agent_id', '').strip()
         full_name = request.POST.get('full_name', '').strip()
