@@ -22,6 +22,9 @@ PROBLEM_TYPES = [
     'انقطاع الكهرباء', 'مشكلة في البرنامج', 'مشكلة في الشاشة'
 ]
 
+# ID ثابت لكل نوع مشكلة (يمثل الـ category_id في الـ DB)
+PROBLEM_CATEGORY_IDS = {p: idx + 1 for idx, p in enumerate(PROBLEM_TYPES)}
+
 
 def _build_base_data(agent_names, customer_names, year):
     """يولّد تقارير ثابتة لكل السنة من 1 يناير حتى 31 ديسمبر،
@@ -65,6 +68,7 @@ def _build_base_data(agent_names, customer_names, year):
                 'resolved_date':     int(report_date.strftime('%Y%m%d')),  # للفلترة الداخلية
                 'resolution_minutes': resolution_minutes,
                 'status_label':       'Resolved' if resolved else 'Unresolved',
+                'category_id':        PROBLEM_CATEGORY_IDS.get(problem),
             })
             report_id += 1
 
@@ -106,6 +110,7 @@ def _build_extra_days(agent_names, customer_names, from_date, to_date, id_start)
                     'resolved_date':      int(cur.strftime('%Y%m%d')),  # للفلترة الداخلية
                     'resolution_minutes': rng.randint(5, 120),
                     'status_label':       'Resolved' if resolved else 'Unresolved',
+                    'category_id':        PROBLEM_CATEGORY_IDS.get(problem),
                 })
                 report_id += 1
         cur += timedelta(days=1)
@@ -175,13 +180,15 @@ def _compute_summary(reports, customer_names):
     total_unresolved = total_reports - total_resolved
 
     # common problems
-    prob_map = defaultdict(int)
+    prob_map = defaultdict(lambda: {'total': 0, 'category_id': None})
     for r in reports:
         clf = r['classification']
         key = clf.split(':')[-1].strip() if ':' in clf else clf
-        prob_map[key] += 1
+        prob_map[key]['total'] += 1
+        if prob_map[key]['category_id'] is None:
+            prob_map[key]['category_id'] = r.get('category_id')
     common_problems = sorted(
-        [{'classification': k, 'total': v} for k, v in prob_map.items()],
+        [{'classification': k, 'total': v['total'], 'category_id': v['category_id']} for k, v in prob_map.items()],
         key=lambda x: x['total'], reverse=True
     )[:5]
 
