@@ -126,9 +126,12 @@ def home(request):
             prob_map = {}
             for r in filtered:
                 cl = r['classification']
-                prob_map[cl] = prob_map.get(cl, 0) + 1
+                cid = r.get('category_id', None)
+                if cl not in prob_map:
+                    prob_map[cl] = {'total': 0, 'category_id': cid}
+                prob_map[cl]['total'] += 1
             common_problems = sorted(
-                [{'classification': k, 'total': v} for k, v in prob_map.items()],
+                [{'classification': k, 'total': v['total'], 'category_id': v['category_id']} for k, v in prob_map.items()],
                 key=lambda x: x['total'], reverse=True
             )[:5]
 
