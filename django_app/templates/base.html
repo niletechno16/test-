@@ -347,13 +347,29 @@
 
         .bell-badge {
             position: absolute;
-            top: 7px;
-            right: 7px;
-            width: 7px;
-            height: 7px;
+            top: -6px;
+            left: -6px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
             background: var(--red);
-            border-radius: 50%;
-            border: 1.5px solid var(--bg2);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 800;
+            font-family: 'Cairo', sans-serif;
+            border-radius: 10px;
+            border: 2px solid var(--bg2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            box-shadow: 0 2px 6px rgba(239,68,68,0.5);
+            animation: badgePop 0.3s ease;
+        }
+        @keyframes badgePop {
+            0%   { transform: scale(0); }
+            70%  { transform: scale(1.2); }
+            100% { transform: scale(1); }
         }
 
         /* Profile */
@@ -1139,9 +1155,36 @@
                 padding: 12px;
             }
 
-            /* إخفاء عناصر الـ navbar الأقل أهمية على الموبايل */
+            /* الموبايل: الجرس يبقى ظاهر لكن الـ panel يتحول لـ drawer */
             .bell-btn {
+                display: flex;
+            }
+            .notif-panel {
+                position: fixed !important;
+                top: auto !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                border-radius: 16px 16px 0 0 !important;
+                max-height: 75vh;
+                z-index: 10000;
+                transform: translateY(100%);
+                transition: transform 0.28s ease;
+                display: block !important;
+            }
+            .notif-panel.open {
+                transform: translateY(0) !important;
+            }
+            .notif-drawer-overlay {
                 display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 9999;
+            }
+            .notif-drawer-overlay.open {
+                display: block;
             }
 
             /* profile بيبقى compact */
@@ -1459,6 +1502,8 @@
                     </div>
                 </div>
             </div>
+            <!-- Drawer overlay للموبايل -->
+            <div class="notif-drawer-overlay" id="notifDrawerOverlay" onclick="closeNotifPanel()"></div>
 
             <div class="profile-btn">
                 <div class="profile-avatar">
@@ -1626,16 +1671,31 @@
 
     function toggleNotifPanel(e) {
         e.stopPropagation();
-        const panel = document.getElementById('notifPanel');
-        panel.classList.toggle('open');
-        if (panel.classList.contains('open')) loadNotifications();
+        const panel   = document.getElementById('notifPanel');
+        const overlay = document.getElementById('notifDrawerOverlay');
+        const isOpen  = panel.classList.contains('open');
+        if (isOpen) {
+            closeNotifPanel();
+        } else {
+            panel.classList.add('open');
+            if (overlay) overlay.classList.add('open');
+            loadNotifications();
+        }
+    }
+
+    function closeNotifPanel() {
+        const panel   = document.getElementById('notifPanel');
+        const overlay = document.getElementById('notifDrawerOverlay');
+        if (panel)   panel.classList.remove('open');
+        if (overlay) overlay.classList.remove('open');
     }
 
     document.addEventListener('click', function(e) {
-        const panel = document.getElementById('notifPanel');
+        const panel   = document.getElementById('notifPanel');
         const wrapper = document.querySelector('.bell-wrapper');
-        if (panel && wrapper && !wrapper.contains(e.target)) {
-            panel.classList.remove('open');
+        const overlay = document.getElementById('notifDrawerOverlay');
+        if (panel && wrapper && !wrapper.contains(e.target) && e.target !== overlay) {
+            closeNotifPanel();
         }
     });
 
