@@ -358,7 +358,6 @@
             font-weight: 800;
             font-family: 'Cairo', sans-serif;
             border-radius: 10px;
-            border: 2px solid var(--bg2);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1326,10 +1325,10 @@
         /* ===== NOTIFICATIONS PANEL ===== */
         .notif-panel {
             display: none;
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
+            position: fixed;
+            top: 60px;
             width: 340px;
+            max-width: calc(100vw - 16px);
             background: var(--surface2);
             border: 1px solid var(--border2);
             border-radius: 12px;
@@ -1681,6 +1680,16 @@
         if (isOpen) {
             closeNotifPanel();
         } else {
+            // احسب المكان الصح عشان الـ panel ميطلعش برا الشاشة
+            const btn   = document.getElementById('bellBtn');
+            const rect  = btn.getBoundingClientRect();
+            const panelW = Math.min(340, window.innerWidth - 16);
+            let left = rect.left;
+            if (left + panelW > window.innerWidth - 8) {
+                left = window.innerWidth - panelW - 8;
+            }
+            if (left < 8) left = 8;
+            panel.style.left = left + 'px';
             panel.classList.add('open');
             if (overlay) overlay.classList.add('open');
             loadNotifications();
