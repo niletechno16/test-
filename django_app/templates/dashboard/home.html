@@ -223,6 +223,29 @@
         align-items: center;
         gap: 10px;
         font-size: 16px;
+        position: relative;
+    }
+
+    .pie-legend-item[onclick]:hover::after,
+    .problems-list li:hover::after {
+        content: attr(title);
+        position: absolute;
+        bottom: calc(100% + 6px);
+        right: 0;
+        background: rgba(15, 20, 45, 0.92);
+        color: #e2e8f0;
+        font-size: 12px;
+        font-family: 'Cairo', sans-serif;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+        pointer-events: none;
+        z-index: 99;
+        border: 1px solid var(--border);
+    }
+
+    .problems-list li {
+        position: relative;
     }
 
     .pie-legend-dot {
@@ -346,15 +369,19 @@
 
     <!-- أكتر أيجنت حل -->
     <div class="chart-card">
-        <div class="section-title" data-ar="أكثر أيجنت حل مشاكل" data-en="Top Resolving Agents">أكثر أيجنت حل مشاكل
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <div class="section-title" style="margin-bottom:0" data-ar="أكثر أيجنت حل مشاكل" data-en="Top Resolving Agents">أكثر أيجنت حل مشاكل</div>
+            <span style="font-size:11px;color:var(--muted);" data-ar="اضغط على عمود لعرض التفاصيل" data-en="Click a bar for more details"><i class="fa-solid fa-hand-pointer" style="margin-left:3px;"></i><span data-ar="اضغط للتفاصيل" data-en="Click for more details">اضغط للتفاصيل</span></span>
         </div>
         <canvas id="agentsChart"></canvas>
     </div>
 
     <!-- أكتر عميل تواصل -->
     <div class="chart-card">
-        <div class="section-title" data-ar="أكثر العملاء تواصلاً" data-en="Top Contacting Customers">أكثر العملاء
-            تواصلاً</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <div class="section-title" style="margin-bottom:0" data-ar="أكثر العملاء تواصلاً" data-en="Top Contacting Customers">أكثر العملاء تواصلاً</div>
+            <span style="font-size:11px;color:var(--muted);" data-ar="اضغط على عمود لعرض التفاصيل" data-en="Click a bar for more details"><i class="fa-solid fa-hand-pointer" style="margin-left:3px;"></i><span data-ar="اضغط للتفاصيل" data-en="Click for more details">اضغط للتفاصيل</span></span>
+        </div>
         <canvas id="customersChart"></canvas>
     </div>
 
@@ -364,7 +391,7 @@
         <div class="pie-wrap">
             <canvas id="pieChart"></canvas>
             <div class="pie-legend">
-                <div class="pie-legend-item" style="cursor:pointer" onclick="goReports('classification', 'تم حل')">
+                <div class="pie-legend-item" style="cursor:pointer" onclick="goReports('resolved_type', '1')" title="Click to view resolved reports | اضغط لعرض التقارير المحلولة">
                     <div class="pie-legend-dot" style="background:var(--green)"></div>
                     <div>
                         <div style="font-weight:700;font-size:18px;color:var(--green)">{{ resolved_pct }}%</div>
@@ -372,7 +399,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="pie-legend-item" style="cursor:pointer" onclick="goReports('classification', 'لم يتم')">
+                <div class="pie-legend-item" style="cursor:pointer" onclick="goReports('resolved_type', '0')" title="Click to view unresolved reports | اضغط لعرض التقارير غير المحلولة">
                     <div class="pie-legend-dot" style="background:var(--red)"></div>
                     <div>
                         <div style="font-weight:700;font-size:18px;color:var(--red)">{{ unresolved_pct }}%</div>
@@ -399,7 +426,7 @@
             {% if common_problems %}
             {% with max_val=common_problems.0.total %}
             {% for p in common_problems %}
-            <li style="cursor:pointer" onclick="goReports('classification', '{{ p.classification|escapejs }}')" title="اضغط لعرض التقارير">
+            <li style="cursor:pointer" onclick="goReports('category_id', '{{ p.category_id|escapejs }}')" title="اضغط لعرض المزيد من التفاصيل | Click for more details">
                 <span class="rank">{{ forloop.counter }}</span>
                 <span class="prob-text" title="{{ p.classification }}">{{ p.classification }}</span>
                 <div class="prob-bar-wrap">
@@ -541,14 +568,13 @@
             if (!elements.length) return;
             const agentName = agentsLabels[elements[0].index];
             const datasetIdx = elements[0].datasetIndex;
-            const classParam = datasetIdx === 0 ? 'تم حل' : 'لم يتم';
             const p = new URLSearchParams();
             p.set('filter_mode', '{{ filter_mode }}');
             {% if filter_month_year %}p.set('month_year', '{{ filter_month_year }}');{% endif %}
             p.set('from', '{{ date_from }}');
             p.set('to',   '{{ date_to }}');
             p.set('agent', agentName);
-            p.set('classification', classParam);
+            p.set('resolved_type', datasetIdx === 0 ? '1' : '0');
             window.location.href = '/reports/?' + p.toString();
         },
         onHover(evt, el) { evt.native.target.style.cursor = el.length ? 'pointer' : 'default'; },
@@ -612,8 +638,7 @@
         },
         onClick(evt, elements) {
             if (!elements.length) return;
-            const classParam = elements[0].index === 0 ? 'تم حل' : 'لم يتم';
-            goReports('classification', classParam);
+            goReports('resolved_type', elements[0].index === 0 ? '1' : '0');
         },
         onHover(evt, el) { evt.native.target.style.cursor = el.length ? 'pointer' : 'default'; },
     }

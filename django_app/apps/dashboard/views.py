@@ -241,6 +241,7 @@ def home(request):
         common_problems = [
             {
                 'classification': r.get('category_name', ''),
+                'category_id':    r.get('id', ''),
                 'total':          r.get('TotalIssues',   0) or 0,
             }
             for r in raw_issues

@@ -62,6 +62,8 @@ def reports_list(request):
     class_filter = request.GET.get('classification', '')
     conv_id_filter = request.GET.get('conv_id', '')
     customer_filter = request.GET.get('customer_name', '')
+    resolved_type = request.GET.get('resolved_type', '')   # '1' = resolved, '0' = unresolved
+    category_id_filter = request.GET.get('category_id', '')  # filter by category id
 
     # لو في conv_id filter → وسّع الـ date range تلقائياً عشان يلاقي التقرير
     if conv_id_filter:
@@ -75,11 +77,19 @@ def reports_list(request):
     if customer_filter:
         month_label = f'{month_label} — عميل: {customer_filter}'
 
+    # resolved_type label
+    resolved_type_label = ''
+    if resolved_type == '1':
+        resolved_type_label = 'محلول'
+    elif resolved_type == '0':
+        resolved_type_label = 'غير محلول'
+
     base_ctx = {
         'month_label': month_label, 'filter_mode': filter_mode,
         'filter_month_year': filter_month_year,
-        'filters': {'agent': agent_filter, 'from': date_from, 'to': date_to, 'classification': class_filter, 'customer_name': customer_filter},
+        'filters': {'agent': agent_filter, 'from': date_from, 'to': date_to, 'classification': class_filter, 'customer_name': customer_filter, 'resolved_type': resolved_type, 'category_id': category_id_filter},
         'is_manager': is_manager_level(request.user),
+        'resolved_type_label': resolved_type_label,
     }
 
     if get_role(request.user) == 'visitor':
@@ -94,6 +104,10 @@ def reports_list(request):
                 data = [r for r in data if r['agent_name'] == agent_filter]
             if class_filter:
                 data = [r for r in data if class_filter in r['classification']]
+            if resolved_type == '1':
+                data = [r for r in data if r['classification'].startswith('تم حل')]
+            elif resolved_type == '0':
+                data = [r for r in data if 'لم يتم' in r['classification']]
             if conv_id_filter:
                 data = [r for r in data if str(r.get('conv_id', '')) == conv_id_filter]
             if customer_filter:
@@ -132,14 +146,21 @@ def reports_list(request):
                 'resolve_date':       r.get('resolve_date',      ''),
                 'resolved_time':      r.get('resolve_time',      ''),
                 'status_label':       r.get('status_label',      ''),
+                'problem_type':       r.get('problem_type',      None),  # 0=unresolved, 1=resolved
+                'category_id':        r.get('category_id',       None),
             }
             for r in raw
         ]
-        # فلتر agent و classification بعد البروسيدر
+        # فلتر بعد البروسيدر
         if agent_filter:
             data = [r for r in data if r['agent_name'] == agent_filter]
         if class_filter:
             data = [r for r in data if class_filter in r['classification']]
+        if resolved_type != '':
+            rt = int(resolved_type)
+            data = [r for r in data if r['problem_type'] == rt]
+        if category_id_filter != '':
+            data = [r for r in data if str(r.get('category_id') or '') == category_id_filter]
         if conv_id_filter:
             data = [r for r in data if str(r.get('conv_id', '')) == conv_id_filter]
         if customer_filter:
