@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nile Techno | {% block title %}Reports{% endblock %}</title>
+    <title>Nile Techno - {% block title %}Dashboard{% endblock %}</title>
     <link rel="icon" type="image/png" href="{% static 'images/NTLogo3.png' %}">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -347,13 +347,29 @@
 
         .bell-badge {
             position: absolute;
-            top: 7px;
-            right: 7px;
-            width: 7px;
-            height: 7px;
+            top: -6px;
+            left: -6px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
             background: var(--red);
-            border-radius: 50%;
-            border: 1.5px solid var(--bg2);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 800;
+            font-family: 'Cairo', sans-serif;
+            border-radius: 10px;
+            border: 2px solid var(--bg2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            box-shadow: 0 2px 6px rgba(239,68,68,0.5);
+            animation: badgePop 0.3s ease;
+        }
+        @keyframes badgePop {
+            0%   { transform: scale(0); }
+            70%  { transform: scale(1.2); }
+            100% { transform: scale(1); }
         }
 
         /* Profile */
@@ -463,94 +479,9 @@
         .main {
             margin-right: var(--sidebar-w);
             margin-left: 0;
-            margin-top: calc(var(--navbar-h) + var(--subbar-h, 48px));
+            margin-top: var(--navbar-h);
             padding: 24px;
             min-height: calc(100vh - var(--navbar-h));
-        }
-
-        /* ===== SUBBAR — شريط الفلتر الثابت تحت الـ navbar ===== */
-        :root {
-            --subbar-h: 48px;
-        }
-
-        .subbar {
-            position: fixed;
-            top: var(--navbar-h);
-            left: 0;
-            right: var(--sidebar-w);
-            height: var(--subbar-h);
-            background: var(--bg2);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 0 24px;
-            z-index: 140;
-            gap: 8px;
-            transition: background 0.25s, border-color 0.25s;
-        }
-
-        .subbar form {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: nowrap;
-        }
-
-        .subbar-group {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .subbar-divider {
-            width: 1px;
-            height: 22px;
-            background: var(--border2);
-            flex-shrink: 0;
-        }
-
-        .subbar label {
-            font-size: 11px;
-            color: var(--muted);
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
-        .subbar input[type="date"],
-        .subbar-select {
-            padding: 4px 7px;
-            border: 1px solid var(--border2);
-            border-radius: 6px;
-            background: var(--surface2);
-            color: var(--text);
-            font-family: 'Cairo', sans-serif;
-            font-size: 11px;
-            outline: none;
-            color-scheme: dark;
-            cursor: pointer;
-        }
-
-        body.light-mode .subbar input[type="date"],
-        body.light-mode .subbar-select {
-            color-scheme: light;
-        }
-
-        .subbar input[type="date"]:focus,
-        .subbar-select:focus {
-            border-color: var(--blue);
-        }
-
-        .btn-reset {
-            padding: 5px 8px !important;
-            background: transparent !important;
-            border-color: var(--border2) !important;
-            color: var(--muted) !important;
-        }
-
-        .btn-reset:hover {
-            color: var(--red) !important;
-            border-color: var(--red) !important;
         }
 
         /* ===== PAGE TITLE ===== */
@@ -1081,13 +1012,43 @@
 
         /* ===== FOOTER ===== */
         .site-footer {
-            margin-top: 32px;
-            padding: 16px 0 8px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border-top: 1px solid var(--border);
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--muted);
             letter-spacing: 0.3px;
+            margin-top: 32px;
+        }
+
+        @media (max-width: 767px) {
+            .site-footer {
+                font-size: 10px;
+            }
+        }
+
+        /* ===== LOGO في الـ NAVBAR (موبايل فقط) ===== */
+        .navbar-logo-mobile {
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .navbar-logo-mobile img {
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .navbar-logo-mobile span {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.3;
+            letter-spacing: 1.5px;
+            white-space: nowrap;
         }
 
         /* ===== MOBILE MENU TOGGLE ===== */
@@ -1121,10 +1082,6 @@
             }
 
             .navbar {
-                padding: 0 16px;
-            }
-
-            .subbar {
                 padding: 0 16px;
             }
 
@@ -1181,6 +1138,10 @@
                 display: flex;
             }
 
+            .navbar-logo-mobile {
+                display: flex;
+            }
+
             /* الـ navbar يمتد لكامل العرض */
             .navbar {
                 right: 0;
@@ -1194,38 +1155,36 @@
                 padding: 12px;
             }
 
-            /* الـ subbar يمتد لكامل العرض على الموبايل */
-            .subbar {
-                right: 0;
-                padding: 0 12px;
-                gap: 6px;
-            }
-            /* footer on mobile */
-            .site-footer {
-                right: 0;
-                padding: 6px 12px;
-            }
-
-            .subbar input[type="date"],
-            .subbar-select {
-                font-size: 10px;
-                padding: 4px 5px;
-                max-width: 100px;
-            }
-
-            .subbar label {
-                display: inline;
-                font-size: 10px;
-                color: var(--muted);
-            }
-
-            .subbar-divider {
-                display: none;
-            }
-
-            /* إخفاء عناصر الـ navbar الأقل أهمية على الموبايل */
+            /* الموبايل: الجرس يبقى ظاهر لكن الـ panel يتحول لـ drawer */
             .bell-btn {
+                display: flex;
+            }
+            .notif-panel {
+                position: fixed !important;
+                top: auto !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                border-radius: 16px 16px 0 0 !important;
+                max-height: 75vh;
+                z-index: 10000;
+                transform: translateY(100%);
+                transition: transform 0.28s ease;
+                display: block !important;
+            }
+            .notif-panel.open {
+                transform: translateY(0) !important;
+            }
+            .notif-drawer-overlay {
                 display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 9999;
+            }
+            .notif-drawer-overlay.open {
+                display: block;
             }
 
             /* profile بيبقى compact */
@@ -1363,6 +1322,100 @@
                 max-width: 100%;
             }
         }
+
+        /* ===== NOTIFICATIONS PANEL ===== */
+        .notif-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            width: 340px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .notif-panel.open { display: block; }
+        .notif-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .notif-mark-all {
+            font-size: 11px;
+            color: var(--muted);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            transition: color 0.15s;
+        }
+        .notif-mark-all:hover { color: #93c5fd; }
+        .notif-list { max-height: 380px; overflow-y: auto; }
+        .notif-item {
+            display: flex;
+            gap: 10px;
+            padding: 11px 14px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.15s;
+            text-decoration: none;
+        }
+        .notif-item:hover { background: var(--surface); }
+        .notif-item.unread { background: rgba(37,99,235,0.07); }
+        .notif-item.unread:hover { background: rgba(37,99,235,0.12); }
+        .notif-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--blue);
+            flex-shrink: 0;
+            margin-top: 6px;
+        }
+        .notif-dot.read { background: transparent; }
+        .notif-body-wrap { flex: 1; min-width: 0; }
+        .notif-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+        .notif-desc {
+            font-size: 11px;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .notif-time {
+            font-size: 10px;
+            color: var(--muted);
+            flex-shrink: 0;
+            align-self: flex-start;
+            margin-top: 2px;
+        }
+        .notif-empty {
+            text-align: center;
+            padding: 28px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+        .notif-icon {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .notif-icon.login    { background: rgba(37,99,235,0.15); color:#60a5fa; }
+        .notif-icon.password { background: rgba(245,158,11,0.15); color:#fbbf24; }
+        .notif-icon.resolved { background: rgba(34,197,94,0.15);  color:#4ade80; }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -1414,6 +1467,11 @@
             <button class="menu-toggle" id="menuToggle" onclick="openSidebar()">
                 <i class="fa-solid fa-bars"></i>
             </button>
+            <!-- اللوجو على الموبايل فقط -->
+            <div class="navbar-logo-mobile">
+                <img src="{% static 'images/NTLogo3.png' %}" alt="NT">
+                <span>Nile Techno<br>Reports</span>
+            </div>
             <span class="page-breadcrumb" id="pageBreadcrumb">{% block page_title %}{% endblock %}</span>
         </div>
 
@@ -1424,13 +1482,30 @@
             </button>
 
             <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="تغيير المظهر">
-                <i class="fa-regular fa-sun" id="themeIcon"></i>
+                <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/>
+                </svg>
             </button>
 
-            <div class="bell-btn">
-                <i class="fa-solid fa-bell"></i>
-                <div class="bell-badge"></div>
+            <!-- ===== NOTIFICATIONS BELL ===== -->
+            <div class="bell-wrapper" style="position:relative;">
+                <button class="bell-btn" id="bellBtn" onclick="toggleNotifPanel(event)" title="الإشعارات">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="bell-badge" id="bellBadge" style="display:none;"></span>
+                </button>
+                <!-- PANEL — البيانات بتيجي من السيرفر مش من الـ HTML -->
+                <div class="notif-panel" id="notifPanel">
+                    <div class="notif-panel-header">
+                        <span><i class="fa-solid fa-bell" style="color:#60a5fa;margin-left:6px;"></i>الإشعارات</span>
+                        <button onclick="markAllRead()" class="notif-mark-all">تحديد الكل كمقروء</button>
+                    </div>
+                    <div class="notif-list" id="notifList">
+                        <div class="notif-empty"><i class="fa-solid fa-bell-slash"></i><br>جاري التحميل...</div>
+                    </div>
+                </div>
             </div>
+            <!-- Drawer overlay للموبايل -->
+            <div class="notif-drawer-overlay" id="notifDrawerOverlay" onclick="closeNotifPanel()"></div>
 
             <div class="profile-btn">
                 <div class="profile-avatar">
@@ -1457,119 +1532,14 @@
         </div>
     </nav>
 
-    <!-- ===== SUBBAR ===== -->
-    <div class="subbar">
-        <form method="get" id="dateFilterForm">
-
-            <div class="subbar-group">
-                <label data-ar="شهر" data-en="Month">شهر</label>
-                <select name="month" id="quickMonth" class="subbar-select">
-                    <option value="" data-ar="-- أي شهر --" data-en="-- Any --">-- أي شهر --</option>
-                    <option value="1"  data-ar="يناير"  data-en="January">يناير</option>
-                    <option value="2"  data-ar="فبراير" data-en="February">فبراير</option>
-                    <option value="3"  data-ar="مارس"   data-en="March">مارس</option>
-                    <option value="4"  data-ar="أبريل"  data-en="April">أبريل</option>
-                    <option value="5"  data-ar="مايو"   data-en="May">مايو</option>
-                    <option value="6"  data-ar="يونيو"  data-en="June">يونيو</option>
-                    <option value="7"  data-ar="يوليو"  data-en="July">يوليو</option>
-                    <option value="8"  data-ar="أغسطس" data-en="August">أغسطس</option>
-                    <option value="9"  data-ar="سبتمبر" data-en="September">سبتمبر</option>
-                    <option value="10" data-ar="أكتوبر" data-en="October">أكتوبر</option>
-                    <option value="11" data-ar="نوفمبر" data-en="November">نوفمبر</option>
-                    <option value="12" data-ar="ديسمبر" data-en="December">ديسمبر</option>
-                </select>
-                <label data-ar="سنة" data-en="Year">سنة</label>
-                <select name="year" id="quickYear" class="subbar-select">
-                    <option value="" data-ar="-- أي سنة --" data-en="-- Any --">-- أي سنة --</option>
-                    <option value="2023">2023</option>
-                    <option value="2024">2024</option>
-                    <option value="2025">2025</option>
-                    <option value="2026">2026</option>
-                </select>
-            </div>
-
-            <div class="subbar-divider"></div>
-
-            <div class="subbar-group">
-                <label data-ar="من" data-en="From">من</label>
-                <input type="date" name="from" id="dateFrom" value="{{ request.GET.from }}">
-                <label data-ar="إلى" data-en="To">إلى</label>
-                <input type="date" name="to" id="dateTo" value="{{ request.GET.to }}">
-            </div>
-
-            <button type="submit" class="btn-filter">
-                <i class="fa-solid fa-filter"></i>
-                <span data-ar="تطبيق" data-en="Apply">تطبيق</span>
-            </button>
-
-            <button type="button" class="btn-filter btn-reset" onclick="resetFilter()" title="إعادة الضبط">
-                <i class="fa-solid fa-rotate-left"></i>
-            </button>
-
-            {% if request.GET.search %}<input type="hidden" name="search" value="{{ request.GET.search }}">{% endif %}
-            {% if request.GET.agent %}<input type="hidden" name="agent" value="{{ request.GET.agent }}">{% endif %}
-            {% if request.GET.classification %}<input type="hidden" name="classification" value="{{ request.GET.classification }}">{% endif %}
-        </form>
-    </div>
-
-    <script>
-    (function () {
-        var qMonth   = document.getElementById('quickMonth');
-        var qYear    = document.getElementById('quickYear');
-        var dateFrom = document.getElementById('dateFrom');
-        var dateTo   = document.getElementById('dateTo');
-        var params   = new URLSearchParams(window.location.search);
-
-        var urlMonth = params.get('month');
-        var urlYear  = params.get('year');
-        var urlFrom  = params.get('from');
-        var urlTo    = params.get('to');
-
-        if (urlMonth) qMonth.value = urlMonth;
-        if (urlYear)  qYear.value  = urlYear;
-
-        if (!urlMonth && !urlYear && !urlFrom && !urlTo) {
-            var now = new Date();
-            qMonth.value = now.getMonth() + 1;
-            qYear.value  = now.getFullYear();
-        }
-
-        function onQuickChange() {
-            if (qMonth.value || qYear.value) {
-                dateFrom.value = '';
-                dateTo.value   = '';
-            }
-        }
-        function onDateChange() {
-            if (dateFrom.value || dateTo.value) {
-                qMonth.value = '';
-                qYear.value  = '';
-            }
-        }
-
-        qMonth.addEventListener('change', onQuickChange);
-        qYear.addEventListener('change', onQuickChange);
-        dateFrom.addEventListener('change', onDateChange);
-        dateTo.addEventListener('change', onDateChange);
-    })();
-
-    function resetFilter() {
-        var now = new Date();
-        document.getElementById('quickMonth').value = now.getMonth() + 1;
-        document.getElementById('quickYear').value  = now.getFullYear();
-        document.getElementById('dateFrom').value   = '';
-        document.getElementById('dateTo').value     = '';
-        document.getElementById('dateFilterForm').submit();
-    }
-    </script>
-
     <!-- ===== MAIN ===== -->
     <main class="main">
         {% block content %}{% endblock %}
-        <footer class="site-footer">
-            © 2026 Nile Techno — All rights reserved &nbsp;|&nbsp; Design by Abdullah Elsawy
-        </footer>
     </main>
+
+    <footer class="site-footer">
+        © 2026 Nile Techno — All rights reserved &nbsp;|&nbsp; Design by Abdullah Elsawy
+    </footer>
 
     {% block extra_js %}{% endblock %}
 
@@ -1583,11 +1553,23 @@
                 document.querySelectorAll('[data-en]').forEach(el => {
                     el.textContent = el.getAttribute('data-en');
                 });
+                document.querySelectorAll('[data-en-placeholder]').forEach(el => {
+                    el.placeholder = el.getAttribute('data-en-placeholder');
+                });
+                // welcome text
+                const w = document.querySelector('.welcome-ar');
+                if (w) w.innerHTML = 'Welcome, <strong>' + w.getAttribute('data-en').split('، ')[1] + '</strong>';
             } else {
                 document.getElementById('langLabel').textContent = 'EN';
                 document.querySelectorAll('[data-ar]').forEach(el => {
                     el.textContent = el.getAttribute('data-ar');
                 });
+                document.querySelectorAll('[data-ar-placeholder]').forEach(el => {
+                    el.placeholder = el.getAttribute('data-ar-placeholder');
+                });
+                // welcome text
+                const w = document.querySelector('.welcome-ar');
+                if (w) w.innerHTML = 'أهلاً بك، <strong>' + w.getAttribute('data-ar').split('، ')[1] + '</strong>';
             }
             localStorage.setItem('ntLang', lang);
             currentLang = lang;
@@ -1617,14 +1599,16 @@
         /* ===== THEME ===== */
         let currentTheme = localStorage.getItem('ntTheme') || 'dark';
 
+        const sunSVG = `<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/>`;
+        const moonSVG = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
         function applyTheme(theme) {
             const icon = document.getElementById('themeIcon');
             if (theme === 'light') {
                 document.body.classList.add('light-mode');
-                icon.className = 'fa-regular fa-moon';
+                icon.innerHTML = moonSVG;
             } else {
                 document.body.classList.remove('light-mode');
-                icon.className = 'fa-regular fa-sun';
+                icon.innerHTML = sunSVG;
             }
             localStorage.setItem('ntTheme', theme);
             currentTheme = theme;
@@ -1677,6 +1661,139 @@
             });
         }
     </script>
+
+    <script>
+    /* ===== NOTIFICATIONS (secure — data from server only) ===== */
+    const NOTIF_URL = '/users/notifications/';
+    const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+    const iconMap = {
+        login: {cls:'login', fa:'fa-right-to-bracket'},
+        password_changed: {cls:'password', fa:'fa-key'},
+        resolved: {cls:'resolved', fa:'fa-circle-check'},
+    };
+
+    function toggleNotifPanel(e) {
+        e.stopPropagation();
+        const panel   = document.getElementById('notifPanel');
+        const overlay = document.getElementById('notifDrawerOverlay');
+        const isOpen  = panel.classList.contains('open');
+        if (isOpen) {
+            closeNotifPanel();
+        } else {
+            panel.classList.add('open');
+            if (overlay) overlay.classList.add('open');
+            loadNotifications();
+        }
+    }
+
+    function closeNotifPanel() {
+        const panel   = document.getElementById('notifPanel');
+        const overlay = document.getElementById('notifDrawerOverlay');
+        if (panel)   panel.classList.remove('open');
+        if (overlay) overlay.classList.remove('open');
+    }
+
+    document.addEventListener('click', function(e) {
+        const panel   = document.getElementById('notifPanel');
+        const wrapper = document.querySelector('.bell-wrapper');
+        const overlay = document.getElementById('notifDrawerOverlay');
+        if (panel && wrapper && !wrapper.contains(e.target) && e.target !== overlay) {
+            closeNotifPanel();
+        }
+    });
+
+    async function loadNotifications() {
+        try {
+            const res  = await fetch(NOTIF_URL, {credentials: 'same-origin'});
+            const data = await res.json();
+            renderNotifications(data.notifications, data.unread_count);
+        } catch(err) {
+            document.getElementById('notifList').innerHTML =
+                '<div class="notif-empty"><i class="fa-solid fa-wifi"></i><br>تعذّر تحميل الإشعارات</div>';
+        }
+    }
+
+    function renderNotifications(notifs, unreadCount) {
+        // Bell badge
+        const badge = document.getElementById('bellBadge');
+        if (unreadCount > 0) {
+            badge.style.display = 'block';
+            badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+        } else {
+            badge.style.display = 'none';
+        }
+
+        const list = document.getElementById('notifList');
+        if (!notifs || notifs.length === 0) {
+            list.innerHTML = '<div class="notif-empty"><i class="fa-solid fa-bell-slash"></i><br>لا توجد إشعارات</div>';
+            return;
+        }
+
+        list.innerHTML = notifs.map(n => {
+            const ic   = iconMap[n.type] || {cls:'login', fa:'fa-bell'};
+            const link = n.type === 'resolved' && n.agent_id
+                ? `/agents/${n.agent_id}/`
+                : '#';
+            return `
+            <a class="notif-item ${n.is_read ? '' : 'unread'}"
+               href="${link}"
+               onclick="markRead(event, ${n.id}, '${link}')">
+                <div class="notif-icon ${ic.cls}"><i class="fa-solid ${ic.fa}"></i></div>
+                <div class="notif-body-wrap">
+                    <div class="notif-title">${escHtml(n.title)}</div>
+                    <div class="notif-desc">${escHtml(n.body)}</div>
+                </div>
+                <div class="notif-time">${n.created_at.split(' ')[1]}</div>
+                <div class="notif-dot ${n.is_read ? 'read' : ''}"></div>
+            </a>`;
+        }).join('');
+    }
+
+    function escHtml(str) {
+        return String(str)
+            .replace(/&/g,'&amp;')
+            .replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;');
+    }
+
+    async function markRead(e, id, link) {
+        e.preventDefault();
+        await fetch(NOTIF_URL, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {'Content-Type':'application/x-www-form-urlencoded', 'X-CSRFToken': CSRF},
+            body: `id=${id}`
+        });
+        if (link && link !== '#') window.location.href = link;
+        else loadNotifications();
+    }
+
+    async function markAllRead() {
+        await fetch(NOTIF_URL, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {'Content-Type':'application/x-www-form-urlencoded', 'X-CSRFToken': CSRF},
+            body: 'id='
+        });
+        loadNotifications();
+    }
+
+    // تحميل عدد الإشعارات عند كل تحميل للصفحة (مش panel)
+    window.addEventListener('load', async function() {
+        try {
+            const res  = await fetch(NOTIF_URL, {credentials: 'same-origin'});
+            const data = await res.json();
+            const badge = document.getElementById('bellBadge');
+            if (data.unread_count > 0) {
+                badge.style.display = 'block';
+                badge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+            }
+        } catch(e) {}
+    });
+    </script>
+
 </body>
 
 </html>

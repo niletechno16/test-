@@ -26,10 +26,10 @@ def is_high_level(user):
     return get_role(user) in ['developer', 'owner']
 
 def is_manager_level(user):
-    return get_role(user) in ['developer', 'owner', 'admin']
+    return get_role(user) in ['developer', 'owner', 'admin', 'agent']
 
 def is_agent_level(user):
-    return get_role(user) == 'agent'
+    return get_role(user) in ['developer', 'owner', 'admin', 'agent']
 
 def is_visitor(user):
     return get_role(user) == 'visitor'
