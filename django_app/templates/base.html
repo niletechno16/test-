@@ -1732,9 +1732,9 @@
 
         list.innerHTML = notifs.map(n => {
             const ic   = iconMap[n.type] || {cls:'login', fa:'fa-bell'};
-            const link = n.type === 'resolved' && n.agent_id
-                ? `/agents/${n.agent_id}/`
-                : '#';
+            const link = n.type === 'resolved' && n.conv_id
+                ? `/reports/?conv_id=${encodeURIComponent(n.conv_id)}`
+                : (n.type === 'resolved' && n.agent_id ? `/agents/${n.agent_id}/` : '#');
             return `
             <a class="notif-item ${n.is_read ? '' : 'unread'}"
                href="${link}"

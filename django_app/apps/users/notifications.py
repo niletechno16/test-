@@ -58,10 +58,10 @@ def notify_resolved(agent_id, agent_name, conv_id=''):
     """
     إشعار resolved → للأيجنت نفسه + Owner + Developer
     agent_id: string مثل '1234567890'
-    conv_id:  رقم التقرير (اختياري) للـ link
+    conv_id:  رقم التقرير للـ link
     """
     title = f"تم حل تقرير: {agent_name}"
-    body  = f"تم تصنيف تقريرك كـ (تم حل) — conv_id: {conv_id}" if conv_id else f"تم تصنيف تقريرك كـ (تم حل)"
+    body  = f"تم تصنيف تقريرك كـ (تم حل) — رقم المحادثة: {conv_id}" if conv_id else "تم تصنيف تقريرك كـ (تم حل)"
 
     recipients = set()
 
@@ -83,4 +83,5 @@ def notify_resolved(agent_id, agent_name, conv_id=''):
             title=title,
             body=body,
             agent_id=str(agent_id),
+            conv_id=str(conv_id) if conv_id else '',
         )

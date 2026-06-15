@@ -451,11 +451,16 @@
     const barLabelPlugin = {
         datalabels: {
             anchor: 'end',
-            align: 'end',
-            offset: 2,
-            color: '#c8d4e8',
+            align: 'top',
+            offset: 0,
+            color: '#e2e8f0',
             font: { family: 'Cairo', size: 11, weight: '700' },
             formatter: v => v > 0 ? v : '',
+            backgroundColor: 'rgba(15,20,45,0.55)',
+            borderRadius: 4,
+            padding: { top: 2, bottom: 2, left: 5, right: 5 },
+            textAlign: 'center',
+            clip: false,
         }
     };
 
@@ -599,11 +604,16 @@
             legend: { display: false },
             datalabels: {
                 anchor: 'end',
-                align: 'end',
-                offset: 2,
+                align: 'top',
+                offset: 0,
                 color: '#fbbf24',
                 font: { family: 'Cairo', size: 11, weight: '700' },
                 formatter: v => v > 0 ? v + ' د' : '',
+                backgroundColor: 'rgba(15,20,45,0.55)',
+                borderRadius: 4,
+                padding: { top: 2, bottom: 2, left: 5, right: 5 },
+                textAlign: 'center',
+                clip: false,
             },
         },
         scales: {

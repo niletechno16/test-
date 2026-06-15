@@ -38,8 +38,9 @@ class Notification(models.Model):
     title       = models.CharField(max_length=200)
     body        = models.TextField(blank=True, default='')
     is_read     = models.BooleanField(default=False)
-    # لو النوع resolved → بنحفظ agent_id عشان نعمل link للتقرير
+    # لو النوع resolved → بنحفظ agent_id و conv_id عشان نعمل link للتقرير
     agent_id    = models.CharField(max_length=50, blank=True, default='')
+    conv_id     = models.CharField(max_length=100, blank=True, default='')
     created_at  = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -60,6 +60,15 @@ def reports_list(request):
     date_from, date_to, month_label, filter_mode, filter_month_year = _resolve_filter(request, today)
     agent_filter = request.GET.get('agent', '')
     class_filter = request.GET.get('classification', '')
+    conv_id_filter = request.GET.get('conv_id', '')
+
+    # لو في conv_id filter → وسّع الـ date range تلقائياً عشان يلاقي التقرير
+    if conv_id_filter:
+        date_from = '2020-01-01'
+        date_to   = date.today().strftime('%Y-%m-%d')
+        month_label = f'بحث عن المحادثة: {conv_id_filter}'
+        filter_mode = 'exact'
+        filter_month_year = ''
 
     base_ctx = {
         'month_label': month_label, 'filter_mode': filter_mode,
@@ -80,6 +89,8 @@ def reports_list(request):
                 data = [r for r in data if r['agent_name'] == agent_filter]
             if class_filter:
                 data = [r for r in data if class_filter in r['classification']]
+            if conv_id_filter:
+                data = [r for r in data if str(r.get('conv_id', '')) == conv_id_filter]
             data = sorted(data, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
             for r in data:
                 c = r.get('classification', '')
@@ -122,6 +133,8 @@ def reports_list(request):
             data = [r for r in data if r['agent_name'] == agent_filter]
         if class_filter:
             data = [r for r in data if class_filter in r['classification']]
+        if conv_id_filter:
+            data = [r for r in data if str(r.get('conv_id', '')) == conv_id_filter]
         if not is_manager_level(request.user):
             current = request.user.first_name or request.user.username
             data = [r for r in data if r['agent_name'] == current]

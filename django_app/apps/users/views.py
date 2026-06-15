@@ -325,6 +325,7 @@ def notifications_api(request):
             'body':       n.body,
             'is_read':    n.is_read,
             'agent_id':   n.agent_id,
+            'conv_id':    n.conv_id,
             'created_at': n.created_at.strftime('%Y-%m-%d %H:%M'),
         })
 
