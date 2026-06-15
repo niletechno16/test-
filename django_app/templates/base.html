@@ -1185,7 +1185,7 @@
                 position: fixed;
                 inset: 0;
                 background: rgba(0,0,0,0.45);
-                z-index: 10998;
+                z-index: 10999;
                 touch-action: none;
             }
             .notif-drawer-overlay.open {
@@ -1339,7 +1339,7 @@
             border: 1px solid var(--border2);
             border-radius: 12px;
             box-shadow: 0 12px 32px rgba(0,0,0,0.45);
-            z-index: 9999;
+            z-index: 11000;
             overflow: hidden;
         }
         .notif-panel.open { display: block; }
@@ -1502,19 +1502,19 @@
                     <i class="fa-solid fa-bell"></i>
                     <span class="bell-badge" id="bellBadge" style="display:none;"></span>
                 </button>
-                <!-- PANEL — البيانات بتيجي من السيرفر مش من الـ HTML -->
-                <div class="notif-panel" id="notifPanel">
-                    <div class="notif-panel-header">
-                        <span><i class="fa-solid fa-bell" style="color:#60a5fa;margin-left:6px;"></i>الإشعارات</span>
-                        <button onclick="markAllRead()" class="notif-mark-all">تحديد الكل كمقروء</button>
-                    </div>
-                    <div class="notif-list" id="notifList">
-                        <div class="notif-empty"><i class="fa-solid fa-bell-slash"></i><br>جاري التحميل...</div>
-                    </div>
-                </div>
             </div>
             <!-- Drawer overlay للموبايل -->
             <div class="notif-drawer-overlay" id="notifDrawerOverlay" onclick="closeNotifPanel()"></div>
+            <!-- PANEL — خارج bell-wrapper عشان z-index يشتغل صح على الموبايل -->
+            <div class="notif-panel" id="notifPanel">
+                <div class="notif-panel-header">
+                    <span><i class="fa-solid fa-bell" style="color:#60a5fa;margin-left:6px;"></i>الإشعارات</span>
+                    <button onclick="markAllRead()" class="notif-mark-all">تحديد الكل كمقروء</button>
+                </div>
+                <div class="notif-list" id="notifList">
+                    <div class="notif-empty"><i class="fa-solid fa-bell-slash"></i><br>جاري التحميل...</div>
+                </div>
+            </div>
 
         </div>
     </nav>
