@@ -201,6 +201,29 @@
         text-align: left;
     }
 
+    /* hint سهم "تفاصيل" على اليمين */
+    .problems-list .prob-details-hint {
+        flex-shrink: 0;
+        width: 52px;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--accent);
+        opacity: 0;
+        transition: opacity 0.2s;
+        white-space: nowrap;
+    }
+
+    .problems-list li.prob-item:hover .prob-details-hint {
+        opacity: 1;
+    }
+
+    /* اللي مفيهاش category_id مش clickable */
+    .problems-list li.prob-item--no-id {
+        cursor: default;
+        opacity: 0.6;
+    }
+
     .pie-wrap {
         display: flex;
         align-items: center;
@@ -426,13 +449,22 @@
             {% if common_problems %}
             {% with max_val=common_problems.0.total %}
             {% for p in common_problems %}
-            <li style="cursor:pointer" onclick="goReports('category_id', '{{ p.category_id|escapejs }}')" title="اضغط لعرض المزيد من التفاصيل | Click for more details">
+            <li style="cursor:pointer" 
+                onclick="{% if p.category_id %}goReportsCategory('{{ p.category_id|escapejs }}', '{{ p.classification|escapejs }}'){% endif %}"
+                data-ar-title="اضغط لعرض تفاصيل: {{ p.classification }}"
+                data-en-title="Click for details: {{ p.classification }}"
+                class="prob-item {% if not p.category_id %}prob-item--no-id{% endif %}">
                 <span class="rank">{{ forloop.counter }}</span>
                 <span class="prob-text" title="{{ p.classification }}">{{ p.classification }}</span>
                 <div class="prob-bar-wrap">
                     <div class="prob-bar" style="width:{% widthratio p.total max_val 100 %}%"></div>
                 </div>
                 <span class="prob-count">{{ p.total }}</span>
+                {% if p.category_id %}
+                <span class="prob-details-hint">
+                    <span data-ar="تفاصيل" data-en="Details"><i class="fa-solid fa-arrow-left"></i></span>
+                </span>
+                {% endif %}
             </li>
             {% endfor %}
             {% endwith %}
@@ -735,6 +767,18 @@
         window.location.href = '/reports/?' + p.toString();
     }
 
+    // ── Navigation helper خاص بالكاتيجوري (بيبعت الاسم كمان عشان الـ badge) ──
+    function goReportsCategory(categoryId, categoryName) {
+        const p = new URLSearchParams();
+        p.set('filter_mode', '{{ filter_mode }}');
+        {% if filter_month_year %}p.set('month_year', '{{ filter_month_year }}');{% endif %}
+        p.set('from', '{{ date_from }}');
+        p.set('to',   '{{ date_to }}');
+        p.set('category_id',   categoryId);
+        p.set('category_name', categoryName);
+        window.location.href = '/reports/?' + p.toString();
+    }
+
     function switchFilterMode(mode) {
         var isMonthYear = mode === 'monthyear';
         document.getElementById('formMonthYear').style.display = isMonthYear ? 'flex' : 'none';
@@ -749,6 +793,15 @@
         var params = new URLSearchParams(window.location.search);
         var mode = params.get('filter_mode') || localStorage.getItem('dashFilterMode') || 'monthyear';
         switchFilterMode(mode);
+    })();
+
+    // ضبط title الـ prob-items حسب اللغة الحالية
+    (function () {
+        var isAr = document.documentElement.lang !== 'en' &&
+                   (localStorage.getItem('lang') || 'ar') === 'ar';
+        document.querySelectorAll('.prob-item[data-ar-title]').forEach(function (li) {
+            li.title = isAr ? li.dataset.arTitle : li.dataset.enTitle;
+        });
     })();
 </script>
 {% endblock %}

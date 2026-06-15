@@ -64,6 +64,7 @@ def reports_list(request):
     customer_filter = request.GET.get('customer_name', '')
     resolved_type = request.GET.get('resolved_type', '')   # '1' = resolved, '0' = unresolved
     category_id_filter = request.GET.get('category_id', '')  # filter by category id
+    category_name_filter = request.GET.get('category_name', '')  # display name for badge
 
     # لو في conv_id filter → وسّع الـ date range تلقائياً عشان يلاقي التقرير
     if conv_id_filter:
@@ -87,7 +88,7 @@ def reports_list(request):
     base_ctx = {
         'month_label': month_label, 'filter_mode': filter_mode,
         'filter_month_year': filter_month_year,
-        'filters': {'agent': agent_filter, 'from': date_from, 'to': date_to, 'classification': class_filter, 'customer_name': customer_filter, 'resolved_type': resolved_type, 'category_id': category_id_filter},
+        'filters': {'agent': agent_filter, 'from': date_from, 'to': date_to, 'classification': class_filter, 'customer_name': customer_filter, 'resolved_type': resolved_type, 'category_id': category_id_filter, 'category_name': category_name_filter},
         'is_manager': is_manager_level(request.user),
         'resolved_type_label': resolved_type_label,
     }
@@ -160,7 +161,11 @@ def reports_list(request):
             rt = int(resolved_type)
             data = [r for r in data if r['problem_type'] == rt]
         if category_id_filter != '':
-            data = [r for r in data if str(r.get('category_id') or '') == category_id_filter]
+            try:
+                cid = int(category_id_filter)
+                data = [r for r in data if r.get('category_id') == cid]
+            except (ValueError, TypeError):
+                pass
         if conv_id_filter:
             data = [r for r in data if str(r.get('conv_id', '')) == conv_id_filter]
         if customer_filter:
