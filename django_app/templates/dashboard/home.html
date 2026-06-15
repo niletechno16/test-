@@ -459,6 +459,35 @@
         }
     };
 
+    // تقطيع الأسماء الطويلة عند المسافات فقط (بدون كسر الكلمة)
+    function wrapLabel(label, maxChars) {
+        if (!label) return label;
+        const words = label.split(' ');
+        const lines = [];
+        let current = '';
+        words.forEach(word => {
+            if ((current + (current ? ' ' : '') + word).length <= maxChars) {
+                current += (current ? ' ' : '') + word;
+            } else {
+                if (current) lines.push(current);
+                current = word;
+            }
+        });
+        if (current) lines.push(current);
+        return lines.length > 1 ? lines.slice(0, 2) : lines[0];
+    }
+
+    const xAxisWrap = {
+        ticks: {
+            maxRotation: 0,
+            minRotation: 0,
+            callback: function(val) {
+                return wrapLabel(this.getLabelForValue(val), 10);
+            },
+            font: { size: 10 }
+        }
+    };
+
     // Agents Bar
     new Chart(document.getElementById('agentsChart'), {
         type: 'bar',
@@ -487,13 +516,14 @@
         },
     options: {
         responsive: true, maintainAspectRatio: true,
+        layout: { padding: { top: 22 } },
             plugins: {
             legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 11 } } },
             ...barLabelPlugin,
         },
         scales: {
-            y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
-            x: { grid: { display: false }, border: { display: false } }
+            y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 }, grace: '15%' },
+            x: { grid: { display: false }, border: { display: false }, ...xAxisWrap }
         }
     }
     });
@@ -515,13 +545,14 @@
         },
     options: {
         responsive: true, maintainAspectRatio: true,
+        layout: { padding: { top: 22 } },
             plugins: {
             legend: { display: false },
             ...barLabelPlugin,
         },
         scales: {
-            y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 } },
-            x: { grid: { display: false }, border: { display: false } }
+            y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 }, grace: '15%' },
+            x: { grid: { display: false }, border: { display: false }, ...xAxisWrap }
         }
     }
     });
@@ -576,9 +607,10 @@
             },
         },
         scales: {
-            y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 10 } },
-            x: { grid: { display: false }, border: { display: false } }
-        }
+            y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 10 }, grace: '15%' },
+            x: { grid: { display: false }, border: { display: false }, ...xAxisWrap }
+        },
+        layout: { padding: { top: 22 } },
     }
     });
 
