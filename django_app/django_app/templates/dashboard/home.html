@@ -1,0 +1,683 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>    /* ===== header row: title + inline filter ===== */
+    .dash-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .dash-header .page-title {
+        margin-bottom: 0;
+    }
+
+    .dash-welcome {
+        font-size: 14px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .dash-welcome strong {
+        color: var(--text);
+        font-weight: 700;
+    }
+
+    /* ===== Smart Filter (next to month banner) ===== */
+    .smart-filter-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .filter-mode-toggle {
+        display: flex;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .filter-mode-toggle button {
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 12px;
+        font-family: 'Cairo', sans-serif;
+        padding: 5px 12px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background .15s, color .15s;
+    }
+
+    .filter-mode-toggle button.active {
+        background: var(--accent);
+        color: #fff;
+    }
+
+    .filter-inputs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .filter-inputs label {
+        font-size: 12px;
+        color: var(--muted);
+        white-space: nowrap;
+    }
+
+    .filter-inputs input[type="date"],
+    .filter-inputs input[type="month"] {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 12px;
+        padding: 4px 8px;
+        height: 30px;
+        font-family: 'Cairo', sans-serif;
+    }
+
+    .filter-inputs input:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
+    .btn-apply-filter {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 5px 14px;
+        font-size: 12px;
+        font-family: 'Cairo', sans-serif;
+        cursor: pointer;
+        white-space: nowrap;
+        height: 30px;
+    }
+
+    .btn-apply-filter:hover {
+        background: #3b5fe8;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .chart-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 22px;
+    }
+
+    .chart-card canvas {
+        max-height: 220px;
+    }
+
+    .problems-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .problems-list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+    }
+
+    .problems-list .rank {
+        width: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        flex-shrink: 0;
+        text-align: center;
+    }
+
+    .problems-list .prob-text {
+        width: 110px;
+        flex-shrink: 0;
+        color: var(--text);
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .problems-list .prob-bar-wrap {
+        flex: 1;
+        background: var(--surface2);
+        border-radius: 4px;
+        height: 22px;
+        overflow: hidden;
+    }
+
+    .problems-list .prob-bar {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 4px;
+        transition: width 0.4s ease;
+        min-width: 4px;
+    }
+
+    .problems-list .prob-count {
+        width: 36px;
+        flex-shrink: 0;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13px;
+        text-align: left;
+    }
+
+    .pie-wrap {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .pie-wrap canvas {
+        max-width: 180px;
+        max-height: 180px;
+    }
+
+    .pie-legend {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .pie-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+    }
+
+    .pie-legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header row: title + welcome -->
+<div class="dash-header">
+    <div class="page-title"><i class="fa-solid fa-house"></i> <span data-ar="لوحة التحكم" data-en="Dashboard">لوحة التحكم</span></div>
+    <div class="dash-welcome">
+        {% if request.user.profile.role == 'visitor' %}
+            👋 <span data-ar="أهلاً بك، Guest" data-en="Welcome, Guest">أهلاً بك، <strong>Guest</strong></span>
+        {% else %}
+            👋 <span data-ar="أهلاً بك، {{ request.user.profile.full_name|default:request.user.first_name|default:request.user.username }}" data-en="Welcome, {{ request.user.profile.full_name|default:request.user.first_name|default:request.user.username }}">أهلاً بك، <strong>{{ request.user.profile.full_name|default:request.user.first_name|default:request.user.username }}</strong></span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Month banner + smart filter -->
+<div class="month-banner"
+    style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <span><i class="fa-solid fa-calendar-check"></i> <span data-ar="البيانات المعروضة لـ"
+            data-en="Showing data for">البيانات المعروضة لـ</span> <strong>{{ month_label }}</strong></span>
+
+    <div class="smart-filter-wrap">
+        <!-- Toggle buttons -->
+        <div class="filter-mode-toggle">
+            <button type="button" id="btnModeMonthYear" class="active" onclick="switchFilterMode('monthyear')">
+                <span data-ar="شهر / سنة" data-en="Month / Year">شهر / سنة</span>
+            </button>
+            <button type="button" id="btnModeExact" onclick="switchFilterMode('exact')">
+                <span data-ar="تاريخ محدد" data-en="Exact Date">تاريخ محدد</span>
+            </button>
+        </div>
+
+        <!-- Mode: شهر وسنة -->
+        <form method="get" id="formMonthYear" class="filter-inputs">
+            <input type="hidden" name="filter_mode" value="monthyear">
+            <label data-ar="الشهر" data-en="Month">الشهر</label>
+            <input type="month" name="month_year" id="inputMonthYear" value="{{ filter_month_year|default:'' }}"
+                style="height:30px;">
+            <button type="submit" class="btn-apply-filter">
+                <i class="fa-solid fa-filter"></i>
+                <span data-ar="تطبيق" data-en="Apply">تطبيق</span>
+            </button>
+        </form>
+
+        <!-- Mode: تاريخ محدد -->
+        <form method="get" id="formExact" class="filter-inputs" style="display:none;">
+            <input type="hidden" name="filter_mode" value="exact">
+            <label data-ar="من" data-en="From">من</label>
+            <input type="date" name="from" id="dashDateFrom" value="{{ date_from }}">
+            <label data-ar="إلى" data-en="To">إلى</label>
+            <input type="date" name="to" id="dashDateTo" value="{{ date_to }}">
+            <button type="submit" class="btn-apply-filter">
+                <i class="fa-solid fa-filter"></i>
+                <span data-ar="تطبيق" data-en="Apply">تطبيق</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="icon" style="background:rgba(79,110,247,.15);color:var(--accent)">
+            <i class="fa-solid fa-comments"></i>
+        </div>
+        <div>
+            <div class="label" data-ar="إجمالي المحادثات" data-en="Total Conversations">إجمالي المحادثات</div>
+            <div class="value">{{ total_reports }}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="icon" style="background:rgba(34,197,94,.15);color:var(--green)">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div>
+            <div class="label" data-ar="تم الحل" data-en="Resolved">تم الحل</div>
+            <div class="value" style="color:var(--green)">{{ total_resolved }}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="icon" style="background:rgba(239,68,68,.15);color:var(--red)">
+            <i class="fa-solid fa-circle-xmark"></i>
+        </div>
+        <div>
+            <div class="label" data-ar="لم يتم الحل" data-en="Unresolved">لم يتم الحل</div>
+            <div class="value" style="color:var(--red)">{{ total_unresolved }}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="icon" style="background:rgba(245,158,11,.15);color:var(--yellow)">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <div>
+            <div class="label" data-ar="إجمالي العملاء" data-en="Total Customers">إجمالي العملاء</div>
+            <div class="value" style="color:var(--yellow)">{{ total_customers }}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="icon" style="background:rgba(139,91,235,.15);color:#a78bfa">
+            <i class="fa-solid fa-stopwatch"></i>
+        </div>
+        <div>
+            <div class="label" data-ar="متوسط وقت الحل (د)" data-en="Avg. Resolution (min)">متوسط وقت الحل (د)</div>
+            <div class="value" style="color:#a78bfa">{{ avg_resolution_overall }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-grid">
+
+    <!-- أكتر أيجنت حل -->
+    <div class="chart-card">
+        <div class="section-title" data-ar="أكثر أيجنت حل مشاكل" data-en="Top Resolving Agents">أكثر أيجنت حل مشاكل
+        </div>
+        <canvas id="agentsChart"></canvas>
+    </div>
+
+    <!-- أكتر عميل تواصل -->
+    <div class="chart-card">
+        <div class="section-title" data-ar="أكثر العملاء تواصلاً" data-en="Top Contacting Customers">أكثر العملاء
+            تواصلاً</div>
+        <canvas id="customersChart"></canvas>
+    </div>
+
+    <!-- نسبة الحل -->
+    <div class="chart-card">
+        <div class="section-title" data-ar="نسبة الحل" data-en="Resolution Rate">نسبة الحل</div>
+        <div class="pie-wrap">
+            <canvas id="pieChart"></canvas>
+            <div class="pie-legend">
+                <div class="pie-legend-item">
+                    <div class="pie-legend-dot" style="background:var(--green)"></div>
+                    <div>
+                        <div style="font-weight:700;font-size:18px;color:var(--green)">{{ resolved_pct }}%</div>
+                        <div style="font-size:12px;color:var(--muted)" data-ar="تم الحل" data-en="Resolved">تم الحل
+                        </div>
+                    </div>
+                </div>
+                <div class="pie-legend-item">
+                    <div class="pie-legend-dot" style="background:var(--red)"></div>
+                    <div>
+                        <div style="font-weight:700;font-size:18px;color:var(--red)">{{ unresolved_pct }}%</div>
+                        <div style="font-size:12px;color:var(--muted)" data-ar="لم يتم الحل" data-en="Unresolved">لم يتم
+                            الحل</div>
+                    </div>
+                </div>
+                <div class="pie-legend-item">
+                    <div class="pie-legend-dot" style="background:var(--yellow)"></div>
+                    <div>
+                        <div style="font-weight:700;font-size:18px;color:var(--yellow)">{{ total_reports }}</div>
+                        <div style="font-size:12px;color:var(--muted)" data-ar="إجمالي" data-en="Total">إجمالي</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- أكتر مشكلة اتكررت -->
+    <div class="chart-card">
+        <div class="section-title" data-ar="أكثر المشاكل تكراراً" data-en="Most Common Issues">أكثر المشاكل تكراراً
+        </div>
+        <ul class="problems-list">
+            {% if common_problems %}
+            {% with max_val=common_problems.0.total %}
+            {% for p in common_problems %}
+            <li>
+                <span class="rank">{{ forloop.counter }}</span>
+                <span class="prob-text" title="{{ p.classification }}">{{ p.classification }}</span>
+                <div class="prob-bar-wrap">
+                    <div class="prob-bar" style="width:{% widthratio p.total max_val 100 %}%"></div>
+                </div>
+                <span class="prob-count">{{ p.total }}</span>
+            </li>
+            {% endfor %}
+            {% endwith %}
+            {% else %}
+            <li><span style="color:var(--muted)">لا توجد بيانات</span></li>
+            {% endif %}
+        </ul>
+    </div>
+
+</div>
+
+<!-- Charts Row 2 -->
+<div class="charts-grid" style="grid-template-columns: 1fr 1fr;">
+
+    <!-- متوسط وقت الحل للعملاء -->
+    <div class="chart-card">
+        <div class="section-title" data-ar="متوسط وقت الحل لكل أيجنت (دقيقة)"
+            data-en="Avg. Resolution Time per Agent (min)">متوسط وقت الحل لكل أيجنت (دقيقة)</div>
+        <canvas id="agentAvgChart"></canvas>
+    </div>
+
+    <!-- ترافيك الرسائل -->
+    <div class="chart-card">
+        <div class="section-title" data-ar="ترافيك الرسائل عبر الوقت" data-en="Message Traffic Over Time">ترافيك الرسائل
+            عبر الوقت</div>
+        <canvas id="trafficChart"></canvas>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script>
+    const chartDefaults = {
+        color: '#8b91b0',
+        font: { family: 'Cairo' }
+    };
+    Chart.defaults.color = chartDefaults.color;
+    Chart.defaults.font.family = chartDefaults.font.family;
+
+    const gridColor = 'rgba(46,50,80,0.6)';
+
+    // تسجيل الـ datalabels plugin
+    Chart.register(ChartDataLabels);
+
+    // إعدادات مشتركة للـ labels فوق الأعمدة
+    const barLabelPlugin = {
+        datalabels: {
+            anchor: 'end',
+            align: 'top',
+            offset: 0,
+            color: '#e2e8f0',
+            font: { family: 'Cairo', size: 11, weight: '700' },
+            formatter: v => v > 0 ? v : '',
+            backgroundColor: 'rgba(15,20,45,0.55)',
+            borderRadius: 4,
+            padding: { top: 2, bottom: 2, left: 5, right: 5 },
+            textAlign: 'center',
+            clip: false,
+        }
+    };
+
+    // تقطيع الأسماء الطويلة عند المسافات فقط (بدون كسر الكلمة)
+    function wrapLabel(label, maxChars) {
+        if (!label) return label;
+        const words = label.split(' ');
+        const lines = [];
+        let current = '';
+        words.forEach(word => {
+            if ((current + (current ? ' ' : '') + word).length <= maxChars) {
+                current += (current ? ' ' : '') + word;
+            } else {
+                if (current) lines.push(current);
+                current = word;
+            }
+        });
+        if (current) lines.push(current);
+        return lines.length > 1 ? lines.slice(0, 2) : lines[0];
+    }
+
+    const xAxisWrap = {
+        ticks: {
+            maxRotation: 0,
+            minRotation: 0,
+            callback: function(val) {
+                return wrapLabel(this.getLabelForValue(val), 10);
+            },
+            font: { size: 10 }
+        }
+    };
+
+    // Agents Bar
+    new Chart(document.getElementById('agentsChart'), {
+        type: 'bar',
+        data: {
+            labels: [{% for a in top_agents_resolved %}"{{ a.agent_name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [
+        {
+            label: 'محلول',
+            data: [{% for a in top_agents_resolved %}{{ a.resolved }}{% if not forloop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: 'rgba(34,197,94,0.75)',
+        borderRadius: 6,
+            borderSkipped: false,
+                barPercentage: 0.55,
+                    categoryPercentage: 0.6,
+                },
+    {
+        label: 'غير محلول',
+            data: [{% for a in top_agents_resolved %}{{ a.unresolved }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+    backgroundColor: 'rgba(239,68,68,0.75)',
+        borderRadius: 6,
+            borderSkipped: false,
+                barPercentage: 0.55,
+                    categoryPercentage: 0.6,
+                },
+            ]
+        },
+    options: {
+        responsive: true, maintainAspectRatio: true,
+        layout: { padding: { top: 22 } },
+            plugins: {
+            legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 11 } } },
+            ...barLabelPlugin,
+        },
+        scales: {
+            y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 }, grace: '15%' },
+            x: { grid: { display: false }, border: { display: false }, ...xAxisWrap }
+        }
+    }
+    });
+
+    // Customers Bar
+    new Chart(document.getElementById('customersChart'), {
+        type: 'bar',
+        data: {
+            labels: [{% for c in top_customers %}"{{ c.customer_name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'عدد المحادثات',
+            data: [{% for c in top_customers %}{{ c.total }}{% if not forloop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: 'rgba(124,58,237,0.7)',
+        borderRadius: 8,
+            borderSkipped: false,
+                barPercentage: 0.55,
+                    categoryPercentage: 0.6,
+            }]
+        },
+    options: {
+        responsive: true, maintainAspectRatio: true,
+        layout: { padding: { top: 22 } },
+            plugins: {
+            legend: { display: false },
+            ...barLabelPlugin,
+        },
+        scales: {
+            y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 1 }, grace: '15%' },
+            x: { grid: { display: false }, border: { display: false }, ...xAxisWrap }
+        }
+    }
+    });
+
+    // Pie
+    new Chart(document.getElementById('pieChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['تم الحل', 'لم يتم الحل'],
+            datasets: [{
+                data: [{{ total_resolved }}, {{ total_unresolved }}],
+        backgroundColor: ['rgba(34,197,94,0.8)', 'rgba(239,68,68,0.8)'],
+        borderColor: ['#22c55e', '#ef4444'],
+        borderWidth: 2,
+    }]
+  },
+        options: {
+        responsive: true, maintainAspectRatio: true,
+        cutout: '72%',
+        plugins: {
+            legend: { display: false },
+            datalabels: { display: false },
+        }
+    }
+});
+    // Agent Avg Resolution Bar
+    new Chart(document.getElementById('agentAvgChart'), {
+        type: 'bar',
+        data: {
+            labels: [{% for a in avg_resolution_by_agent %}"{{ a.name }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'متوسط وقت الحل (د)',
+            data: [{% for a in avg_resolution_by_agent %}{{ a.avg }}{% if not forloop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: 'rgba(245,158,11,0.7)',
+        borderRadius: 8,
+            borderSkipped: false,
+                barPercentage: 0.25,
+                    categoryPercentage: 0.5,
+            }]
+        },
+    options: {
+        responsive: true, maintainAspectRatio: true,
+            plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'top',
+                offset: 0,
+                color: '#fbbf24',
+                font: { family: 'Cairo', size: 11, weight: '700' },
+                formatter: v => v > 0 ? v + ' د' : '',
+                backgroundColor: 'rgba(15,20,45,0.55)',
+                borderRadius: 4,
+                padding: { top: 2, bottom: 2, left: 5, right: 5 },
+                textAlign: 'center',
+                clip: false,
+            },
+        },
+        scales: {
+            y: { grid: { display: false }, border: { display: false }, ticks: { stepSize: 10 }, grace: '15%' },
+            x: { grid: { display: false }, border: { display: false }, ...xAxisWrap }
+        },
+        layout: { padding: { top: 22 } },
+    }
+    });
+
+    // Traffic Line Chart
+    new Chart(document.getElementById('trafficChart'), {
+        type: 'line',
+        data: {
+            labels: [{% for t in traffic_by_date %}"{{ t.date }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'عدد الرسائل',
+            data: [{% for t in traffic_by_date %}{{ t.count }}{% if not forloop.last %}, {% endif %} {% endfor %}],
+    borderColor: 'rgba(37,99,235,0.9)',
+        backgroundColor: 'rgba(37,99,235,0.08)',
+            borderWidth: 2.5,
+                pointRadius: 3,
+                    pointHoverRadius: 5,
+                        pointBackgroundColor: 'rgba(37,99,235,0.9)',
+                            fill: true,
+                                tension: 0.45,
+            }]
+        },
+    options: {
+        responsive: true, maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                datalabels: { display: false },
+            },
+        scales: {
+            y: {
+                grid: { display: false },
+                border: { display: false },
+                ticks: { stepSize: 1 },
+                suggestedMin: 2,
+                },
+            x: {
+                grid: { display: false },
+                border: { display: false },
+                ticks: { maxRotation: 0, maxTicksLimit: 8 }
+            }
+        }
+    }
+    });
+
+    function switchFilterMode(mode) {
+        var isMonthYear = mode === 'monthyear';
+        document.getElementById('formMonthYear').style.display = isMonthYear ? 'flex' : 'none';
+        document.getElementById('formExact').style.display = isMonthYear ? 'none' : 'flex';
+        document.getElementById('btnModeMonthYear').classList.toggle('active', isMonthYear);
+        document.getElementById('btnModeExact').classList.toggle('active', !isMonthYear);
+        localStorage.setItem('dashFilterMode', mode);
+    }
+
+    // On page load: restore active mode from URL params or localStorage
+    (function () {
+        var params = new URLSearchParams(window.location.search);
+        var mode = params.get('filter_mode') || localStorage.getItem('dashFilterMode') || 'monthyear';
+        switchFilterMode(mode);
+    })();
+</script>
+{% endblock %}
