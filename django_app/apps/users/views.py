@@ -424,6 +424,68 @@ def change_role(request, user_id):
     return redirect('manage_users')
 
 
+# ---------------- CHECK RESOLVED (background poll) ----------------
+@login_required
+def check_resolved_api(request):
+    """
+    GET → يتحقق من تقارير الأيجنت الحالي ويولّد إشعارات resolved جديدة لو مش موجودة
+    بيتعمله poll من base.html كل 60 ثانية — مش مرتبط بصفحة معينة
+    """
+    from .notifications import notify_resolved
+    import datetime
+    import calendar as cal
+
+    user = request.user
+    try:
+        agent_id = str(user.profile.agent_id)
+    except Exception:
+        return JsonResponse({'ok': False})
+
+    # نجيب تقارير الشهر الحالي فقط
+    today      = datetime.date.today()
+    date_from  = today.replace(day=1).strftime('%Y-%m-%d')
+    last_day   = cal.monthrange(today.year, today.month)[1]
+    date_to    = today.replace(day=last_day).strftime('%Y-%m-%d')
+
+    new_count = 0
+    try:
+        conn   = get_connection()
+        cursor = conn.cursor(as_dict=True)
+        cursor.execute(
+            "EXEC Get_Reports_byA @FromDate = %s, @ToDate = %s",
+            (date_from, date_to)
+        )
+        raw = cursor.fetchall() or []
+        conn.close()
+
+        agent_name = None
+        for r in raw:
+            if str(r.get('agent_id', '')) != agent_id:
+                continue
+            if not r.get('classification', '').startswith('تم حل'):
+                continue
+
+            conv_id    = str(r.get('conv_id', ''))
+            if not agent_name:
+                agent_name = r.get('agent_name', agent_id)
+
+            # لو الإشعار ده اتبعت قبل كده → تجاهل
+            already = Notification.objects.filter(
+                notif_type='resolved',
+                agent_id=agent_id,
+                body__contains=conv_id,
+            ).exists() if conv_id else False
+
+            if not already:
+                notify_resolved(agent_id, agent_name or agent_id, conv_id)
+                new_count += 1
+
+    except Exception:
+        pass
+
+    return JsonResponse({'ok': True, 'new': new_count})
+
+
 # ---------------- LOGOUT ----------------
 def logout_view(request):
     logout(request)

@@ -1792,6 +1792,29 @@
             }
         } catch(e) {}
     });
+
+    // ── background poll: يولّد إشعارات resolved جديدة في أي صفحة كل 60 ثانية ──
+    async function pollResolvedNotifs() {
+        try {
+            const res  = await fetch('/users/check-resolved/', {credentials: 'same-origin'});
+            const data = await res.json();
+            if (data.new && data.new > 0) {
+                // في إشعارات جديدة → حدّث الـ badge فوراً
+                const res2  = await fetch(NOTIF_URL, {credentials: 'same-origin'});
+                const data2 = await res2.json();
+                const badge = document.getElementById('bellBadge');
+                if (data2.unread_count > 0) {
+                    badge.style.display = 'block';
+                    badge.textContent = data2.unread_count > 9 ? '9+' : data2.unread_count;
+                }
+            }
+        } catch(e) {}
+    }
+    // أول استدعاء بعد 5 ثواني من تحميل الصفحة، ثم كل 60 ثانية
+    setTimeout(function() {
+        pollResolvedNotifs();
+        setInterval(pollResolvedNotifs, 60000);
+    }, 5000);
     </script>
 
 </body>
