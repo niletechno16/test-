@@ -258,14 +258,6 @@ def home(request):
             }
             for r in raw_issues
         ]
-        # أضف صف "لم يتم تحديد مشكلة" بنفس العدد اللي في كارت NotDefined
-        if total_unspecified:
-            common_problems.append({
-                'classification': 'لم يتم تحديد مشكلة',
-                'category_id':    None,
-                'total':          total_unspecified,
-            })
-            common_problems.sort(key=lambda x: x['total'], reverse=True)
         cursor.nextset()
 
         # ── 5. Traffic by Date ──
