@@ -311,7 +311,6 @@
   <input type="hidden" name="to" value="{{ filters.to }}">
   {% endif %}
   {% if filters.customer_name %}<input type="hidden" name="customer_name" value="{{ filters.customer_name }}">{% endif %}
-  {% if filters.resolved_type %}<input type="hidden" name="resolved_type" value="{{ filters.resolved_type }}">{% endif %}
   {% if filters.category_id %}<input type="hidden" name="category_id" value="{{ filters.category_id }}"><input type="hidden" name="category_name" value="{{ filters.category_name }}">{% endif %}
   <div class="filters-bar">
     {% if is_manager %}
@@ -322,6 +321,12 @@
       {% endfor %}
     </select>
     {% endif %}
+    <select class="select-input" name="resolved_type">
+      <option value="" data-ar="كل الحالات" data-en="All Statuses" {% if filters.resolved_type == '' %}selected{% endif %}>كل الحالات</option>
+      <option value="1" data-ar="محلول" data-en="Resolved" {% if filters.resolved_type == '1' %}selected{% endif %}>محلول</option>
+      <option value="0" data-ar="غير محلول" data-en="Unresolved" {% if filters.resolved_type == '0' %}selected{% endif %}>غير محلول</option>
+      <option value="2" data-ar="غير محدد" data-en="Unspecified problem" {% if filters.resolved_type == '2' %}selected{% endif %}>غير محدد</option>
+    </select>
     <input class="search-input" type="text" name="classification" placeholder="فلتر بالتصنيف..."
       data-ar-placeholder="فلتر بالتصنيف..." data-en-placeholder="Filter by classification..."
       value="{{ filters.classification }}" style="min-width:180px">
@@ -329,13 +334,6 @@
     <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.4);color:#a78bfa;border-radius:6px;padding:4px 10px;font-size:13px;white-space:nowrap;">
       <i class="fa-solid fa-user"></i> {{ filters.customer_name }}
       <a href="{% url 'reports_list' %}?filter_mode={{ filter_mode }}&month_year={{ filter_month_year }}&from={{ filters.from }}&to={{ filters.to }}&agent={{ filters.agent }}&classification={{ filters.classification }}&resolved_type={{ filters.resolved_type }}&category_id={{ filters.category_id }}" style="color:inherit;margin-right:2px;" title="مسح فلتر العميل"><i class="fa-solid fa-xmark"></i></a>
-    </span>
-    {% endif %}
-    {% if resolved_type_label %}
-    <span style="display:inline-flex;align-items:center;gap:6px;{% if filters.resolved_type == '1' %}background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.4);color:#22c55e;{% elif filters.resolved_type == '2' %}background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.4);color:#8b5cf6;{% else %}background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#ef4444;{% endif %}border-radius:6px;padding:4px 10px;font-size:13px;white-space:nowrap;">
-      <i class="fa-solid fa-{% if filters.resolved_type == '1' %}circle-check{% elif filters.resolved_type == '2' %}circle-question{% else %}circle-xmark{% endif %}"></i>
-      <span data-ar="{{ resolved_type_label }}" data-en="{% if filters.resolved_type == '1' %}Resolved{% elif filters.resolved_type == '2' %}Unspecified problem{% else %}Unresolved{% endif %}">{{ resolved_type_label }}</span>
-      <a href="{% url 'reports_list' %}?filter_mode={{ filter_mode }}&month_year={{ filter_month_year }}&from={{ filters.from }}&to={{ filters.to }}&agent={{ filters.agent }}&classification={{ filters.classification }}&customer_name={{ filters.customer_name }}&category_id={{ filters.category_id }}" style="color:inherit;margin-right:2px;" title="مسح فلتر الحالة"><i class="fa-solid fa-xmark"></i></a>
     </span>
     {% endif %}
     {% if filters.category_id %}
