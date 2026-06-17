@@ -299,12 +299,10 @@
                 <div class="s-val" style="color:var(--red)">{{ c.unresolved }}</div>
                 <div class="s-lbl" data-ar="غير محلول" data-en="Unresolved">غير محلول</div>
             </div>
-            {% if c.unspecified %}
             <div class="stat-item">
-                <div class="s-val" style="color:var(--purple)">{{ c.unspecified }}</div>
+                <div class="s-val" style="color:var(--purple)">{{ c.unspecified|default:0 }}</div>
                 <div class="s-lbl" data-ar="غير محدد" data-en="Unspecified">غير محدد</div>
             </div>
-            {% endif %}
         </div>
         {% if c.avg_resolution_minutes %}
         <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">

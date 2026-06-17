@@ -465,6 +465,17 @@
             <div class="value" style="color:var(--red)">{{ total_unresolved }}</div>
         </div>
     </div>
+    {% if total_unspecified %}
+    <div class="stat-card">
+        <div class="icon" style="background:rgba(139,91,235,.15);color:var(--purple)">
+            <i class="fa-solid fa-circle-question"></i>
+        </div>
+        <div>
+            <div class="label" data-ar="مشكلة غير محددة" data-en="Unspecified Problem">مشكلة غير محددة</div>
+            <div class="value" style="color:var(--purple)">{{ total_unspecified }}</div>
+        </div>
+    </div>
+    {% endif %}
     <div class="stat-card">
         <div class="icon" style="background:rgba(245,158,11,.15);color:var(--yellow)">
             <i class="fa-solid fa-users"></i>
