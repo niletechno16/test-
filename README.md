@@ -1,171 +1,287 @@
-# 🤖 Nile Techno — ChatWoot AI Support Reporter
+# 🤖  AI-Powered Customer Support Intelligence Platform
 
-An automated system that receives conversation closure notifications from ChatWoot, analyzes them using AI, and saves reports to a SQL Server database.
+An end-to-end platform that automatically transforms customer support conversations into actionable business insights.
 
----
-
-## 📋 Project Overview
-
-When any support conversation is closed on ChatWoot, the system automatically:
-
-1. Receives the closure notification via Webhook
-2. Fetches the full conversation history from ChatWoot API
-3. Analyzes the conversation using AI and extracts a summary and classification
-4. Saves the data into two tables in SQL Server
+The system integrates with Chatwoot, analyzes customer conversations using multiple AI providers, stores structured data in SQL Server, and provides a comprehensive analytics dashboard for monitoring support operations and performance.
 
 ---
 
-## 🗂️ File Structure
+# 📋 Project Overview
 
-```
-├── Main.py           # Main application code
-├── requirements.txt  # Required libraries
-├── Dockerfile        # Docker configuration (optional)
-└── README.md         # This file
-```
+This platform automates the entire post-support workflow.
 
----
+Whenever a conversation is closed in Chatwoot, the system automatically:
 
-## ⚙️ Requirements
+1. Receives the closure event through a Webhook
+2. Retrieves the complete conversation history from Chatwoot
+3. Analyzes the conversation using AI models
+4. Generates summaries and issue classifications
+5. Stores structured data in SQL Server
+6. Updates the analytics dashboard in real time
 
-### Libraries
-```
-fastapi
-uvicorn
-requests
-groq
-google-generativeai
-cerebras-cloud-sdk
-pymssql
-```
-
-### Python
-Version 3.14 or higher
+The platform helps organizations monitor support quality, measure team performance, and gain valuable insights from customer interactions.
 
 ---
 
-## 🔑 Environment Variables
+# 🏗️ System Architecture
 
-Add the following variables in Render or any deployment environment:
+The project consists of two main components:
 
-### ChatWoot
-| Variable | Description |
-|---|---|
-| `CHATWOOT_URL` | ChatWoot server URL |
-| `ACCOUNT_ID` | ChatWoot account ID |
-| `ACCESS_TOKEN` | ChatWoot API access token |
+## 1. AI Automation Service (FastAPI)
 
-### Groq API Keys
-| Variable | Description |
-|---|---|
-| `GROQ_KEY_1` to `GROQ_KEY_5` | Groq API keys (5 keys for fallback) |
+Responsible for:
 
-### Gemini API Keys
-| Variable | Description |
-|---|---|
-| `GEMINI_KEY_1` to `GEMINI_KEY_5` | Gemini API keys (5 keys for fallback) |
+* Receiving Chatwoot Webhooks
+* Fetching conversation history
+* AI-powered conversation analysis
+* Issue classification
+* Resolution status detection
+* Data processing and storage
 
-### Cerebras API Keys
-| Variable | Description |
-|---|---|
-| `CEREBRAS_KEY_1` to `CEREBRAS_KEY_4` | Cerebras API keys (4 keys for fallback) |
+## 2. Analytics Dashboard (Django)
 
-### Database
-| Variable | Description |
-|---|---|
-| `DB_SERVER` | SQL Server address |
-| `DB_NAME` | Database name |
-| `DB_USER` | Database username |
-| `DB_PASSWORD` | Database password |
-| `DB_PORT` | Port number (default: 1433) |
+Responsible for:
+
+* KPI Monitoring
+* Agent Performance Tracking
+* Customer Analytics
+* Issue Analysis
+* Reporting & Filtering
+* Role-Based Access Control
+* Operational Insights
 
 ---
 
-## 🗄️ Database Schema
+# ✨ Key Features
 
-### Reports Table `Customer_service_reports_by_A`
-| Column | Type | Description |
-|---|---|---|
-| `id` | INT | Auto-increment primary key |
-| `customer_id` | INT | Permanent customer ID |
-| `customer_name` | NVARCHAR(255) | Customer name |
-| `customer_phone` | NVARCHAR(50) | Phone number |
-| `classification` | NVARCHAR(500) | AI classification |
-| `agent_id` | INT | Agent ID |
-| `agent_name` | NVARCHAR(255) | Agent name |
-| `conv_id` | NVARCHAR(50) | Conversation ID |
-| `resolved_date` | BIGINT | Closure date |
-| `resolved_time` | NVARCHAR(20) | Closure time |
-| `summary` | NVARCHAR(MAX) | AI summary |
-| `created_at` | DATETIME | Record creation time |
+## AI Automation
 
-### Customers Table `customer_detail_by_A`
-| Column | Type | Description |
-|---|---|---|
-| `customer_id` | INT | Primary key — never duplicated |
-| `customer_name` | NVARCHAR(255) | Customer name |
-| `customer_phone` | NVARCHAR(50) | Phone number |
+* Automated conversation processing
+* AI-generated summaries
+* Automatic issue classification
+* Resolution detection
+* Multi-provider AI fallback architecture
+* Real-time data synchronization
 
-> Each customer is saved only once regardless of how many times their conversations are closed.
+## Analytics Dashboard
+
+* Interactive dashboard
+* Customer insights
+* Agent performance tracking
+* Resolved vs unresolved metrics
+* Common issue analysis
+* Advanced date filtering
+* Historical reporting
+* KPI monitoring
+* Role-based permissions
+* Guest access mode
 
 ---
 
-## 🤖 AI System
+# 🤖 AI Architecture
 
-The system uses an automatic fallback chain:
+The platform uses a multi-provider fallback mechanism:
 
-```
-Groq (5 keys) → Gemini (5 keys) → Cerebras (4 keys)
-```
+Groq → Gemini → Cerebras
 
-If a key fails → tries the next one automatically.
-If a provider is exhausted → moves to the next provider.
+### Features
 
-### AI Response Format
-```
-الخلاصة: Detailed description of the problem
-التصنيف: تم حل مشكلة:... / لم يتم حل مشكلة:... / العميل لا يرد / سيتم التواصل مع العميل قريباً / لم يتم تعريف مشكلة / لم يتم تعريف حل
-```
+* Automatic failover
+* Multiple API keys support
+* High availability
+* Improved reliability
+* Continuous processing even during provider outages
 
----
+### AI Outputs
 
-## 🔗 Endpoints
-
-| Endpoint | Method | Description |
-|---|---|---|
-| `/webhook` | POST | Receives ChatWoot notifications |
-| `/health` | GET | Health check to keep server alive |
+* Conversation Summary
+* Issue Classification
+* Resolution Status
+* Support Outcome Analysis
 
 ---
 
-## 🚀 Deploying on Render
+# 🗄️ Database
 
-1. Push files to GitHub
-2. Create a new Web Service on Render
-3. Select the repo
-4. Add all environment variables
-5. In ChatWoot → Settings → Integrations → Webhooks add:
-```
-https://your-app.onrender.com/webhook
-```
-Enable: **Conversation Status Changed**
+Microsoft SQL Server is used as the primary data source.
+
+Main modules include:
+
+### Customer Management
+
+Stores customer information without duplication.
+
+### Support Reports
+
+Stores:
+
+* Customer Information
+* Agent Information
+* Conversation Metadata
+* AI Summaries
+* Issue Classifications
+* Resolution Status
+* Timestamps
+
+### Dashboard Analytics
+
+Aggregated data used for:
+
+* Performance Metrics
+* Operational Reports
+* Customer Insights
+* Trend Analysis
 
 ---
 
-## 🔧 SQL Server Connection Settings
+# 👥 User Roles
 
-The system uses `pymssql` with the following settings:
-```python
-tds_version='4.2'
-charset='CP1256'
-```
+The dashboard supports multiple access levels:
 
-> These settings are required to connect to a Windows SQL Server from a Linux environment (Render).
+* Developer
+* Owner
+* Admin
+* Agent
+* Visitor (Guest Access)
+
+Each role has its own permissions and visibility scope.
 
 ---
 
-## 🛡️ Uptime & Reliability
+# 🔗 API Endpoints
 
-- **UptimeRobot** — Pings `/health` every 5 minutes to prevent sleep
-- **Render Health Check** — Auto-restarts if the server goes down
-- **Auto Deploy** — Deploys automatically on every GitHub push
+## FastAPI Service
+
+### POST /webhook
+
+Receives Chatwoot conversation status events.
+
+### GET /health
+
+Application health check endpoint.
+
+---
+
+# ⚙️ Technologies Used
+
+## Backend
+
+* Python
+* FastAPI
+* Django
+* Django REST Framework
+
+## Database
+
+* Microsoft SQL Server
+* pymssql
+
+## AI Providers
+
+* Groq
+* Google Gemini
+* Cerebras
+
+## Integrations
+
+* Chatwoot API
+* Webhooks
+
+## Deployment
+
+* Docker
+* Render
+* Gunicorn
+* WhiteNoise
+* UptimeRobot
+
+## Version Control
+
+* Git
+* GitHub
+
+---
+
+# 🔐 Environment Variables
+
+Required variables:
+
+## Chatwoot
+
+* CHATWOOT_URL
+* ACCOUNT_ID
+* ACCESS_TOKEN
+
+## Groq
+
+* GROQ_KEY_1 → GROQ_KEY_5
+
+## Gemini
+
+* GEMINI_KEY_1 → GEMINI_KEY_5
+
+## Cerebras
+
+* CEREBRAS_KEY_1 → CEREBRAS_KEY_4
+
+## Database
+
+* DB_SERVER
+* DB_NAME
+* DB_USER
+* DB_PASSWORD
+* DB_PORT
+
+## Django
+
+* SECRET_KEY
+* DEBUG
+* ALLOWED_HOSTS
+
+---
+
+# 📊 Dashboard Capabilities
+
+The analytics dashboard provides:
+
+* Support performance monitoring
+* Agent productivity analysis
+* Customer activity tracking
+* Resolution rate monitoring
+* Historical reporting
+* Date-based filtering
+* Operational KPIs
+* Support trend analysis
+
+---
+
+# 🚀 Deployment
+
+The platform is deployed using Render and Docker.
+
+Features include:
+
+* Auto Deploy from GitHub
+* Health Monitoring
+* Automatic Restart
+* Continuous Delivery Workflow
+
+---
+
+# 🎯 Project Goal
+
+The goal of this project is to transform unstructured customer support conversations into structured business intelligence that helps organizations:
+
+* Improve support quality
+* Measure team performance
+* Reduce manual reporting effort
+* Identify recurring issues
+* Make data-driven decisions
+
+---
+
+# 👨‍💻 Author
+
+Designed, developed, and deployed end-to-end by Nile Techno.
+
+From idea validation and system architecture to AI integration, dashboard development, database design, and production deployment.

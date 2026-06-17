@@ -70,6 +70,7 @@ def _customers_from_reports(all_customers, filtered_reports):
             'total_reports':          s['total'],
             'resolved':               s['resolved'],
             'unresolved':             s['unresolved'],
+            'unspecified':            0,  # لا يوجد تصنيف "غير محدد" في بيانات الزائر التجريبية
             'avg_resolution_minutes': round(sum(mins)/len(mins)) if mins else None,
         })
     return sorted(result, key=lambda x: x['total_reports'], reverse=True)
@@ -117,6 +118,7 @@ def customers_list(request):
                 'total_reports':          r.get('TotalProblems',        0) or 0,
                 'resolved':               r.get('Resolved',             0) or 0,
                 'unresolved':             r.get('Unresolved',           0) or 0,
+                'unspecified':            r.get('NotDefined',           0) or 0,
                 'avg_resolution_minutes': round(r.get('Avg_Resolution_Time', 0) or 0) or None,
             }
             for r in raw
@@ -178,6 +180,7 @@ def customer_detail(request, customer_id):
                 'resolve_date':       r.get('resolve_date',      ''),
                 'resolved_time':      r.get('resolve_time',      ''),
                 'status_label':       r.get('status_label',      ''),
+                'problem_type':       r.get('problem_type',      None),
             }
             for r in raw
         ]

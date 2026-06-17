@@ -84,6 +84,8 @@ def reports_list(request):
         resolved_type_label = 'محلول'
     elif resolved_type == '0':
         resolved_type_label = 'غير محلول'
+    elif resolved_type == '2':
+        resolved_type_label = 'غير محدد'
 
     base_ctx = {
         'month_label': month_label, 'filter_mode': filter_mode,
@@ -215,7 +217,7 @@ def monthly(request):
             for r in month_reps:
                 a = r['agent_name']
                 if a not in agents_seen:
-                    agents_seen[a] = {'agent_name': a, 'total': 0, 'resolved': 0, 'unresolved': 0}
+                    agents_seen[a] = {'agent_name': a, 'total': 0, 'resolved': 0, 'unresolved': 0, 'unspecified': 0}
                 agents_seen[a]['total'] += 1
                 if r['classification'].startswith('تم حل'):
                     agents_seen[a]['resolved'] += 1
@@ -239,10 +241,11 @@ def monthly(request):
         conn.close()
         data = [
             {
-                'agent_name': r.get('agent_name', ''),
-                'total':      r.get('TotalProblems', 0) or 0,
-                'resolved':   r.get('Resolved',      0) or 0,
-                'unresolved': r.get('Unresolved',    0) or 0,
+                'agent_name':  r.get('agent_name', ''),
+                'total':       r.get('TotalProblems', 0) or 0,
+                'resolved':    r.get('Resolved',      0) or 0,
+                'unresolved':  r.get('Unresolved',    0) or 0,
+                'unspecified': r.get('NotDefined',    0) or 0,
             }
             for r in raw
             if r.get('agent_name')

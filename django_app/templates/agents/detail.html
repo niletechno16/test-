@@ -305,7 +305,9 @@
                         </div>
                     </td>
                     <td>
-                        {% if r.status_label == 'Resolved' %}
+                        {% if r.problem_type == 2 %}
+                        <span class="badge badge-purple">{{ r.status_label|default:"Unspecified problem" }}</span>
+                        {% elif r.status_label == 'Resolved' %}
                         <span class="badge badge-success">Resolved</span>
                         {% else %}
                         <span class="badge badge-danger">Unresolved</span>

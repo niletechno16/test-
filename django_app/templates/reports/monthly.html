@@ -33,6 +33,7 @@
           <th data-ar="الإجمالي" data-en="Total">الإجمالي</th>
           <th data-ar="تم الحل" data-en="Resolved">تم الحل</th>
           <th data-ar="لم يتم الحل" data-en="Unresolved">لم يتم الحل</th>
+          <th data-ar="غير محدد" data-en="Unspecified">غير محدد</th>
           <th data-ar="نسبة الحل" data-en="Resolution Rate">نسبة الحل</th>
         </tr>
       </thead>
@@ -43,6 +44,7 @@
           <td><span class="badge badge-blue">{{ row.total }}</span></td>
           <td><span class="badge badge-green">{{ row.resolved }}</span></td>
           <td><span class="badge badge-red">{{ row.unresolved }}</span></td>
+          <td><span class="badge badge-purple">{{ row.unspecified|default:0 }}</span></td>
           <td>
             {% if row.total %}
               {% widthratio row.resolved row.total 100 %}%
@@ -52,7 +54,7 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:40px">لا توجد بيانات لهذا الشهر</td></tr>
+        <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px">لا توجد بيانات لهذا الشهر</td></tr>
         {% endfor %}
       </tbody>
     </table>

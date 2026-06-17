@@ -55,12 +55,14 @@ def _empty_context():
         'total_reports':           0,
         'total_resolved':          0,
         'total_unresolved':        0,
+        'total_unspecified':       0,
         'total_customers':         0,
         'top_agents_resolved':     [],
         'top_customers':           [],
         'common_problems':         [],
         'resolved_pct':            0,
         'unresolved_pct':          0,
+        'unspecified_pct':         0,
         'traffic_by_date':         [],
         'avg_resolution_overall':  0,
         'avg_resolution_by_agent': [],
@@ -95,8 +97,10 @@ def home(request):
             total_reports    = len(filtered)
             total_resolved   = sum(1 for r in filtered if r['classification'].startswith('تم حل'))
             total_unresolved = sum(1 for r in filtered if 'لم يتم' in r['classification'])
+            total_unspecified = 0  # لا يوجد تصنيف "غير محدد" في بيانات الزائر التجريبية
             resolved_pct     = round(total_resolved   / total_reports * 100) if total_reports else 0
             unresolved_pct   = round(total_unresolved / total_reports * 100) if total_reports else 0
+            unspecified_pct  = 0
             total_customers  = vdata['total_customers']
 
             avg_mins = [r['resolution_minutes'] for r in filtered if r.get('resolution_minutes')]
@@ -106,7 +110,7 @@ def home(request):
             for r in filtered:
                 a = r['agent_name']
                 if a not in agents_map:
-                    agents_map[a] = {'agent_name': a, 'total': 0, 'resolved': 0, 'unresolved': 0}
+                    agents_map[a] = {'agent_name': a, 'total': 0, 'resolved': 0, 'unresolved': 0, 'unspecified': 0}
                 agents_map[a]['total'] += 1
                 if r['classification'].startswith('تم حل'):
                     agents_map[a]['resolved'] += 1
@@ -159,12 +163,14 @@ def home(request):
                 'total_reports':           total_reports,
                 'total_resolved':          total_resolved,
                 'total_unresolved':        total_unresolved,
+                'total_unspecified':       total_unspecified,
                 'total_customers':         total_customers,
                 'top_agents_resolved':     top_agents_resolved,
                 'top_customers':           top_customers,
                 'common_problems':         common_problems,
                 'resolved_pct':            resolved_pct,
                 'unresolved_pct':          unresolved_pct,
+                'unspecified_pct':         unspecified_pct,
                 'traffic_by_date':         traffic_by_date,
                 'avg_resolution_overall':  avg_resolution_overall,
                 'avg_resolution_by_agent': avg_resolution_by_agent,
@@ -190,13 +196,15 @@ def home(request):
             total_reports          = card_row.get('TotalConversations',    0) or 0
             total_resolved         = card_row.get('Resolved',              0) or 0
             total_unresolved       = card_row.get('Unresolved',            0) or 0
+            total_unspecified      = card_row.get('NotDefined',            0) or 0
             total_customers        = card_row.get('TotalCustomers',        0) or 0
             avg_resolution_overall = round(card_row.get('AvgResolutionMinutes', 0) or 0)
         else:
-            total_reports = total_resolved = total_unresolved = total_customers = avg_resolution_overall = 0
+            total_reports = total_resolved = total_unresolved = total_unspecified = total_customers = avg_resolution_overall = 0
 
-        resolved_pct   = round(total_resolved   / total_reports * 100) if total_reports else 0
-        unresolved_pct = round(total_unresolved / total_reports * 100) if total_reports else 0
+        resolved_pct    = round(total_resolved    / total_reports * 100) if total_reports else 0
+        unresolved_pct  = round(total_unresolved  / total_reports * 100) if total_reports else 0
+        unspecified_pct = round(total_unspecified / total_reports * 100) if total_reports else 0
 
         # ── 2. Top Agents ──
         cursor.execute(
@@ -210,6 +218,7 @@ def home(request):
                 'total':        r.get('TotalProblems', 0) or 0,
                 'resolved':     r.get('Resolved',      0) or 0,
                 'unresolved':   r.get('Unresolved',    0) or 0,
+                'unspecified':  r.get('NotDefined',    0) or 0,
                 'avg':          round(r.get('Avg_Resolution_Time', 0) or 0),
             }
             for r in raw_agents
@@ -273,12 +282,14 @@ def home(request):
             'total_reports':           total_reports,
             'total_resolved':          total_resolved,
             'total_unresolved':        total_unresolved,
+            'total_unspecified':       total_unspecified,
             'total_customers':         total_customers,
             'top_agents_resolved':     top_agents_resolved,
             'top_customers':           top_customers,
             'common_problems':         common_problems,
             'resolved_pct':            resolved_pct,
             'unresolved_pct':          unresolved_pct,
+            'unspecified_pct':         unspecified_pct,
             'traffic_by_date':         traffic_by_date,
             'avg_resolution_overall':  avg_resolution_overall,
             'avg_resolution_by_agent': avg_resolution_by_agent,

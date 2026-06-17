@@ -262,6 +262,12 @@
                 <div class="s-val" style="color:var(--red)">{{ agent.unresolved }}</div>
                 <div class="s-lbl" data-ar="غير محلول" data-en="Unresolved">غير محلول</div>
             </div>
+            {% if agent.unspecified %}
+            <div class="stat-item">
+                <div class="s-val" style="color:var(--purple)">{{ agent.unspecified }}</div>
+                <div class="s-lbl" data-ar="غير محدد" data-en="Unspecified">غير محدد</div>
+            </div>
+            {% endif %}
         </div>
         {% if agent.avg_resolution_minutes %}
         <div

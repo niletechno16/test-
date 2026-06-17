@@ -4,13 +4,13 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="google-site-verification" content="iSoA_5JqTTbepfUwQShRrlH0p-10fUXwZt6rpi5wgrw" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nile Techno - {% block title %}Dashboard{% endblock %}</title>
     <link rel="icon" type="image/png" href="{% static 'images/NTLogo3.png' %}">
-    <link href="{% static 'css/cairo.css' %}" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/fontawesome.min.css' %}">
-    <script src="{% static 'js/chart.umd.min.js' %}"></script>
-    <script src="{% static 'js/chartjs-plugin-datalabels.min.js' %}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg: #0b1528;
@@ -29,6 +29,8 @@
             --green-glow: rgba(34, 197, 94, 0.15);
             --red: #ef4444;
             --yellow: #f59e0b;
+            --purple: #8b5cf6;
+            --purple-glow: rgba(139, 92, 246, 0.15);
             --success: #22c55e;
             --danger: #ef4444;
             --warning: #f59e0b;
@@ -711,6 +713,16 @@
             background: var(--blue-glow);
             color: #93c5fd;
             border: 1px solid rgba(37, 99, 235, 0.2);
+        }
+
+        .badge-purple {
+            background: var(--purple-glow);
+            color: #c4b5fd;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        body.light-mode .badge-purple {
+            color: #7c3aed;
         }
 
         body.light-mode .badge-success {

@@ -537,6 +537,16 @@
                             الحل</div>
                     </div>
                 </div>
+                {% if total_unspecified %}
+                <div class="pie-legend-item" style="cursor:pointer" onclick="goReports('resolved_type', '2')" title="Click to view unspecified problem reports | اضغط لعرض المشاكل غير المحددة">
+                    <div class="pie-legend-dot" style="background:var(--purple)"></div>
+                    <div>
+                        <div style="font-weight:700;font-size:18px;color:var(--purple)">{{ unspecified_pct }}%</div>
+                        <div style="font-size:12px;color:var(--muted)" data-ar="غير محدد" data-en="Unspecified problem">غير محدد
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
                 <div class="pie-legend-item">
                     <div class="pie-legend-dot" style="background:var(--yellow)"></div>
                     <div>
@@ -614,6 +624,8 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
     const chartDefaults = {
         color: '#8b91b0',
@@ -698,6 +710,15 @@
                 barPercentage: 0.55,
                     categoryPercentage: 0.6,
                 },
+    {
+        label: 'غير محدد',
+            data: [{% for a in top_agents_resolved %}{{ a.unspecified|default:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+    backgroundColor: 'rgba(139,92,246,0.75)',
+        borderRadius: 6,
+            borderSkipped: false,
+                barPercentage: 0.55,
+                    categoryPercentage: 0.6,
+                },
             ]
         },
     options: {
@@ -715,13 +736,14 @@
             if (!elements.length) return;
             const agentName = agentsLabels[elements[0].index];
             const datasetIdx = elements[0].datasetIndex;
+            const rt = datasetIdx === 0 ? '1' : (datasetIdx === 1 ? '0' : '2');
             const p = new URLSearchParams();
             p.set('filter_mode', '{{ filter_mode }}');
             {% if filter_month_year %}p.set('month_year', '{{ filter_month_year }}');{% endif %}
             p.set('from', '{{ date_from }}');
             p.set('to',   '{{ date_to }}');
             p.set('agent', agentName);
-            p.set('resolved_type', datasetIdx === 0 ? '1' : '0');
+            p.set('resolved_type', rt);
             window.location.href = '/reports/?' + p.toString();
         },
         onHover(evt, el) { evt.native.target.style.cursor = el.length ? 'pointer' : 'default'; },
@@ -768,11 +790,11 @@
     new Chart(document.getElementById('pieChart'), {
         type: 'doughnut',
         data: {
-            labels: ['تم الحل', 'لم يتم الحل'],
+            labels: ['تم الحل', 'لم يتم الحل', 'غير محدد'],
             datasets: [{
-                data: [{{ total_resolved }}, {{ total_unresolved }}],
-        backgroundColor: ['rgba(34,197,94,0.8)', 'rgba(239,68,68,0.8)'],
-        borderColor: ['#22c55e', '#ef4444'],
+                data: [{{ total_resolved }}, {{ total_unresolved }}, {{ total_unspecified }}],
+        backgroundColor: ['rgba(34,197,94,0.8)', 'rgba(239,68,68,0.8)', 'rgba(139,92,246,0.8)'],
+        borderColor: ['#22c55e', '#ef4444', '#8b5cf6'],
         borderWidth: 2,
     }]
   },
@@ -785,7 +807,9 @@
         },
         onClick(evt, elements) {
             if (!elements.length) return;
-            goReports('resolved_type', elements[0].index === 0 ? '1' : '0');
+            const idx = elements[0].index;
+            const rt  = idx === 0 ? '1' : (idx === 1 ? '0' : '2');
+            goReports('resolved_type', rt);
         },
         onHover(evt, el) { evt.native.target.style.cursor = el.length ? 'pointer' : 'default'; },
     }
@@ -924,9 +948,11 @@
     const customersData  = {{ top_customers|safe }};
     const resolvedPct    = {{ resolved_pct }};
     const unresolvedPct  = {{ unresolved_pct }};
+    const unspecifiedPct = {{ unspecified_pct }};
     const totalReports   = {{ total_reports }};
     const totalResolved  = {{ total_resolved }};
     const totalUnresolved= {{ total_unresolved }};
+    const totalUnspecified = {{ total_unspecified }};
 
     function openModal(title, bodyHtml) {
         document.getElementById('detailsModalTitle').innerHTML = title;
@@ -959,6 +985,7 @@
             const total = a.total || 0;
             const res   = a.resolved || 0;
             const unres = a.unresolved || 0;
+            const unspec= a.unspecified || 0;
             const avg   = a.avg || 0;
             const resPct= total ? Math.round(res/total*100) : 0;
             return `<tr>
@@ -966,6 +993,7 @@
                 <td style="text-align:center;font-weight:700;color:var(--accent)">${total}</td>
                 <td style="text-align:center;color:var(--green)">${res}</td>
                 <td style="text-align:center;color:var(--red)">${unres}</td>
+                <td style="text-align:center;color:var(--purple)">${unspec}</td>
                 <td style="text-align:center;">
                     <span class="pct-bar" style="width:${resPct * 0.6}px;background:var(--green);"></span>
                     <span style="color:var(--green);font-weight:700;">${resPct}%</span>
@@ -976,7 +1004,7 @@
         }).join('');
         openModal('<i class="fa-solid fa-user-tie" style="color:var(--accent)"></i> تفاصيل الأيجنت',
             `<table><thead><tr>
-                <th>الأيجنت</th><th>الإجمالي</th><th>محلول</th><th>غير محلول</th><th>نسبة الحل</th><th>متوسط الحل</th><th></th>
+                <th>الأيجنت</th><th>الإجمالي</th><th>محلول</th><th>غير محلول</th><th>غير محدد</th><th>نسبة الحل</th><th>متوسط الحل</th><th></th>
             </tr></thead><tbody>${rows}</tbody></table>`);
     }
 
@@ -1002,8 +1030,17 @@
     function showResolutionDetails() {
         const resPct  = resolvedPct;
         const unrPct  = unresolvedPct;
+        const unsPct  = unspecifiedPct;
         const resBar  = Math.round(resPct  * 1.5);
         const unrBar  = Math.round(unrPct  * 1.5);
+        const unsBar  = Math.round(unsPct  * 1.5);
+        const unspecifiedRow = totalUnspecified ? `
+                <tr>
+                    <td><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--purple);display:inline-block;"></span> غير محدد</span></td>
+                    <td style="text-align:center;font-weight:700;color:var(--purple)">${totalUnspecified}</td>
+                    <td><span class="pct-bar" style="width:${unsBar}px;background:var(--purple);"></span><span style="color:var(--purple);font-weight:700;">${unsPct}%</span></td>
+                    <td>${makeGoBtn('resolved_type', '2', 'عرض')}</td>
+                </tr>` : '';
         const body = `
         <table>
             <thead><tr><th>الحالة</th><th>العدد</th><th>النسبة</th><th></th></tr></thead>
@@ -1020,6 +1057,7 @@
                     <td><span class="pct-bar" style="width:${unrBar}px;background:var(--red);"></span><span style="color:var(--red);font-weight:700;">${unrPct}%</span></td>
                     <td>${makeGoBtn('resolved_type', '0', 'عرض')}</td>
                 </tr>
+                ${unspecifiedRow}
                 <tr>
                     <td><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--yellow);display:inline-block;"></span> الإجمالي</span></td>
                     <td style="text-align:center;font-weight:700;color:var(--yellow)">${totalReports}</td>

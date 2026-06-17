@@ -22,6 +22,8 @@ INSTALLED_APPS = [
     'apps.customers.apps.CustomersConfig',
     'apps.reports.apps.ReportsConfig',
     'apps.dashboard.apps.DashboardConfig',
+    'django.contrib.sitemaps',
+
 ]
 
 MIDDLEWARE = [
