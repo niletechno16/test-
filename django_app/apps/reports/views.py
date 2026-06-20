@@ -108,17 +108,19 @@ def reports_list(request):
             if class_filter:
                 data = [r for r in data if class_filter in r['classification']]
             if resolved_type == '1':
-                data = [r for r in data if r['classification'].startswith('تم حل')]
+                data = [r for r in data if r.get('problem_type') == 1]
             elif resolved_type == '0':
-                data = [r for r in data if 'لم يتم' in r['classification']]
+                data = [r for r in data if r.get('problem_type') == 0]
+            elif resolved_type == '2':
+                data = [r for r in data if r.get('problem_type') == 2]
             if conv_id_filter:
                 data = [r for r in data if str(r.get('conv_id', '')) == conv_id_filter]
             if customer_filter:
                 data = [r for r in data if r.get('customer_name', '') == customer_filter]
             data = sorted(data, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
             for r in data:
-                c = r.get('classification', '')
-                r['classification_type'] = 'resolved' if c.startswith('تم حل') else ('unresolved' if 'لم يتم' in c else 'other')
+                pt = r.get('problem_type')
+                r['classification_type'] = 'resolved' if pt == 1 else ('unresolved' if pt == 0 else 'other')
 
             agents = list(set(r['agent_name'] for r in vdata['reports']))
         except Exception:

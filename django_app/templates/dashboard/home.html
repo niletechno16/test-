@@ -578,21 +578,19 @@
             {% with max_val=common_problems.0.total %}
             {% for p in common_problems %}
             <li style="cursor:pointer" 
-                onclick="{% if p.category_id %}goReportsCategory('{{ p.category_id|escapejs }}', '{{ p.classification|escapejs }}'){% endif %}"
+                onclick="{% if p.category_id %}goReportsCategory('{{ p.category_id|escapejs }}', '{{ p.classification|escapejs }}'){% else %}goReports('resolved_type', '2'){% endif %}"
                 data-ar-title="اضغط لعرض تفاصيل: {{ p.classification }}"
                 data-en-title="Click for details: {{ p.classification }}"
-                class="prob-item {% if not p.category_id %}prob-item--no-id{% endif %}">
+                class="prob-item">
                 <span class="rank">{{ forloop.counter }}</span>
                 <span class="prob-text" title="{{ p.classification }}">{{ p.classification }}</span>
                 <div class="prob-bar-wrap">
                     <div class="prob-bar" style="width:{% widthratio p.total max_val 100 %}%"></div>
                 </div>
                 <span class="prob-count">{{ p.total }}</span>
-                {% if p.category_id %}
                 <span class="prob-details-hint">
                     <span data-ar="تفاصيل" data-en="Details"><i class="fa-solid fa-arrow-left"></i></span>
                 </span>
-                {% endif %}
             </li>
             {% endfor %}
             {% endwith %}

@@ -48,20 +48,23 @@ def _filter_reports(reports, date_from, date_to):
 
 
 def _customers_from_reports(all_customers, filtered_reports):
-    stats = defaultdict(lambda: {'total': 0, 'resolved': 0, 'unresolved': 0, 'mins': []})
+    stats = defaultdict(lambda: {'total': 0, 'resolved': 0, 'unresolved': 0, 'unspecified': 0, 'mins': []})
     for r in filtered_reports:
         c = r['customer_name']
         stats[c]['total'] += 1
-        if r['classification'].startswith('تم حل'):
+        pt = r.get('problem_type')
+        if pt == 1:
             stats[c]['resolved'] += 1
-        else:
+        elif pt == 0:
             stats[c]['unresolved'] += 1
+        else:
+            stats[c]['unspecified'] += 1
         if r.get('resolution_minutes'):
             stats[c]['mins'].append(r['resolution_minutes'])
     result = []
     for customer in all_customers:
         name = customer['customer_name']
-        s    = stats.get(name, {'total': 0, 'resolved': 0, 'unresolved': 0, 'mins': []})
+        s    = stats.get(name, {'total': 0, 'resolved': 0, 'unresolved': 0, 'unspecified': 0, 'mins': []})
         mins = s['mins']
         result.append({
             'customer_id':            customer['customer_id'],
@@ -70,7 +73,7 @@ def _customers_from_reports(all_customers, filtered_reports):
             'total_reports':          s['total'],
             'resolved':               s['resolved'],
             'unresolved':             s['unresolved'],
-            'unspecified':            0,  # لا يوجد تصنيف "غير محدد" في بيانات الزائر التجريبية
+            'unspecified':            s['unspecified'],
             'avg_resolution_minutes': round(sum(mins)/len(mins)) if mins else None,
         })
     return sorted(result, key=lambda x: x['total_reports'], reverse=True)
