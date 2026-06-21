@@ -13,7 +13,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY django_app/ .
 
-RUN python manage.py collectstatic --noinput || true
+ENV DJANGO_SETTINGS_MODULE=config.settings
+ENV SECRET_KEY=temp-build-key
+ENV DEBUG=False
+
+RUN python manage.py collectstatic --noinput
 
 EXPOSE 8080
 
