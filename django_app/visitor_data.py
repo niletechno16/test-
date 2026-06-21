@@ -49,6 +49,7 @@ def _make_report(rng, report_id, agent_idx, agent_name, customer_name, report_da
         summary        = 'تواصل العميل باستفسار عام دون تحديد مشكلة فنية معينة.'
         status_label   = 'Unspecified'
         category_id    = UNSPECIFIED_CATEGORY_ID
+        problem_type   = 2
     else:
         problem        = rng.choice(PROBLEM_TYPES)
         resolved       = rng.random() < 0.75
@@ -56,11 +57,12 @@ def _make_report(rng, report_id, agent_idx, agent_name, customer_name, report_da
         summary        = f"تواصل العميل بخصوص {problem}. {'تم حل المشكلة بنجاح.' if resolved else 'المشكلة قيد المتابعة.'}"
         status_label   = 'Resolved' if resolved else 'Unresolved'
         category_id    = PROBLEM_CATEGORY_IDS.get(problem)
+        problem_type   = 1 if resolved else 0
 
     return {
         'conv_id':            report_id,
         'customer_name':      customer_name,
-        'customer_phone':     f"01{rng.randint(0,2)}{rng.randint(10000000, 99999999)}",
+        'customer_phone':     '000000000000',
         'agent_name':         agent_name,
         'agent_id':           agent_idx + 1,
         'classification':     classification,
@@ -70,6 +72,7 @@ def _make_report(rng, report_id, agent_idx, agent_name, customer_name, report_da
         'resolved_date':      int(report_date.strftime('%Y%m%d')),  # للفلترة الداخلية
         'resolution_minutes': resolution_minutes,
         'status_label':       status_label,
+        'problem_type':       problem_type,
         'category_id':        category_id,
     }
 
@@ -166,7 +169,7 @@ def _compute_summary(reports, customer_names):
         if r['resolution_minutes']:
             cust_map[c]['mins'].append(r['resolution_minutes'])
         if not cust_map[c]['phone']:
-           cust_map[c]['phone'] = f"01{rng_phone.randint(0,2)}{rng_phone.randint(10000000, 99999999)}"
+           cust_map[c]['phone'] = "00000000000"
 
     customers = []
     for idx, (name, d) in enumerate(cust_map.items()):
