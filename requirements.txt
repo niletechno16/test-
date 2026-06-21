@@ -1,0 +1,7 @@
+django
+pymssql
+whitenoise
+gunicorn
+uvicorn
+djangorestframework
+python-dotenv
