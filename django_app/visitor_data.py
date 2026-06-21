@@ -25,6 +25,54 @@ PROBLEM_TYPES = [
 # ID ثابت لكل نوع مشكلة (يمثل الـ category_id في الـ DB)
 PROBLEM_CATEGORY_IDS = {p: idx + 1 for idx, p in enumerate(PROBLEM_TYPES)}
 
+# ─── فئة "لم يتم تحديد مشكلة" ────────────────────────────────────────────────
+# تصنيف مستقل تمامًا (لا resolved ولا unresolved) — يمثل محادثة استفسار عام
+# بدون تحديد مشكلة فنية. لازم يكون الأكثر تكرارًا بين كل الفئات.
+UNSPECIFIED_PROBLEM    = 'لم يتم تحديد مشكلة'
+UNSPECIFIED_CATEGORY_ID = len(PROBLEM_TYPES) + 1   # = 11
+UNSPECIFIED_CLASSIFICATION = f'استفسار عام: {UNSPECIFIED_PROBLEM}'
+# نسبة المحادثات اللي هتكون من نوع "غير محدد" من إجمالي المحادثات
+UNSPECIFIED_RATIO = 0.22
+
+
+def _make_report(rng, report_id, agent_idx, agent_name, customer_name, report_date):
+    """يبني تقرير واحد. بنسبة UNSPECIFIED_RATIO يكون التقرير 'غير محدد' (لا resolved ولا unresolved)،
+    وفي باقي الحالات بيكون مشكلة محددة resolved أو unresolved زي العادي."""
+    hour    = rng.randint(8, 17)
+    minute  = rng.randint(0, 59)
+    ampm    = 'AM' if hour < 12 else 'PM'
+    hour_12 = hour if hour <= 12 else hour - 12
+    resolution_minutes = rng.randint(5, 120)
+
+    if rng.random() < UNSPECIFIED_RATIO:
+        classification = UNSPECIFIED_CLASSIFICATION
+        summary        = 'تواصل العميل باستفسار عام دون تحديد مشكلة فنية معينة.'
+        status_label   = 'Unspecified'
+        category_id    = UNSPECIFIED_CATEGORY_ID
+    else:
+        problem        = rng.choice(PROBLEM_TYPES)
+        resolved       = rng.random() < 0.75
+        classification = f"تم حل مشكلة: {problem}" if resolved else f"لم يتم حل مشكلة: {problem}"
+        summary        = f"تواصل العميل بخصوص {problem}. {'تم حل المشكلة بنجاح.' if resolved else 'المشكلة قيد المتابعة.'}"
+        status_label   = 'Resolved' if resolved else 'Unresolved'
+        category_id    = PROBLEM_CATEGORY_IDS.get(problem)
+
+    return {
+        'conv_id':            report_id,
+        'customer_name':      customer_name,
+        'customer_phone':     f"01{rng.randint(0,2)}{rng.randint(10000000, 99999999)}",
+        'agent_name':         agent_name,
+        'agent_id':           agent_idx + 1,
+        'classification':     classification,
+        'summary':            summary,
+        'resolve_date':       report_date.strftime('%Y-%m-%d'),
+        'resolved_time':      f"{hour_12:02d}:{minute:02d} {ampm}",
+        'resolved_date':      int(report_date.strftime('%Y%m%d')),  # للفلترة الداخلية
+        'resolution_minutes': resolution_minutes,
+        'status_label':       status_label,
+        'category_id':        category_id,
+    }
+
 
 def _build_base_data(agent_names, customer_names, year):
     """يولّد تقارير ثابتة لكل السنة من 1 يناير حتى 31 ديسمبر،
@@ -43,33 +91,8 @@ def _build_base_data(agent_names, customer_names, year):
 
         for _ in range(num_reports):
             customer_name = rng.choice(customer_names)
-            problem       = rng.choice(PROBLEM_TYPES)
-            resolved      = rng.random() < 0.75
             report_date   = start + timedelta(days=rng.randint(0, total_days - 1))
-            hour          = rng.randint(8, 17)
-            minute        = rng.randint(0, 59)
-            ampm          = 'AM' if hour < 12 else 'PM'
-            hour_12       = hour if hour <= 12 else hour - 12
-
-            classification    = f"تم حل مشكلة: {problem}" if resolved else f"لم يتم حل مشكلة: {problem}"
-            summary           = f"تواصل العميل بخصوص {problem}. {'تم حل المشكلة بنجاح.' if resolved else 'المشكلة قيد المتابعة.'}"
-            resolution_minutes = rng.randint(5, 120)
-
-            reports.append({
-                'conv_id':           report_id,
-                'customer_name':     customer_name,
-                'customer_phone':    '000000000000',
-                'agent_name':        agent_name,
-                'agent_id':          agent_idx + 1,
-                'classification':    classification,
-                'summary':           summary,
-                'resolve_date':      report_date.strftime('%Y-%m-%d'),
-                'resolved_time':     f"{hour_12:02d}:{minute:02d} {ampm}",
-                'resolved_date':     int(report_date.strftime('%Y%m%d')),  # للفلترة الداخلية
-                'resolution_minutes': resolution_minutes,
-                'status_label':       'Resolved' if resolved else 'Unresolved',
-                'category_id':        PROBLEM_CATEGORY_IDS.get(problem),
-            })
+            reports.append(_make_report(rng, report_id, agent_idx, agent_name, customer_name, report_date))
             report_id += 1
 
     return reports
@@ -90,28 +113,7 @@ def _build_extra_days(agent_names, customer_names, from_date, to_date, id_start)
             num = rng.randint(2, 5)
             for _ in range(num):
                 customer_name = rng.choice(customer_names)
-                problem       = rng.choice(PROBLEM_TYPES)
-                resolved      = rng.random() < 0.75
-                hour          = rng.randint(8, 17)
-                minute        = rng.randint(0, 59)
-                ampm          = 'AM' if hour < 12 else 'PM'
-                hour_12       = hour if hour <= 12 else hour - 12
-
-                reports.append({
-                    'conv_id':            report_id,
-                    'customer_name':      customer_name,
-                    'customer_phone': "00000000000",
-                    'agent_name':         agent_name,
-                    'agent_id':           agent_idx + 1,
-                    'classification':     f"تم حل مشكلة: {problem}" if resolved else f"لم يتم حل مشكلة: {problem}",
-                    'summary':            f"تواصل العميل بخصوص {problem}. {'تم حل المشكلة بنجاح.' if resolved else 'المشكلة قيد المتابعة.'}",
-                    'resolve_date':       cur.strftime('%Y-%m-%d'),
-                    'resolved_time':      f"{hour_12:02d}:{minute:02d} {ampm}",
-                    'resolved_date':      int(cur.strftime('%Y%m%d')),  # للفلترة الداخلية
-                    'resolution_minutes': rng.randint(5, 120),
-                    'status_label':       'Resolved' if resolved else 'Unresolved',
-                    'category_id':        PROBLEM_CATEGORY_IDS.get(problem),
-                })
+                reports.append(_make_report(rng, report_id, agent_idx, agent_name, customer_name, cur))
                 report_id += 1
         cur += timedelta(days=1)
 
@@ -121,15 +123,17 @@ def _build_extra_days(agent_names, customer_names, from_date, to_date, id_start)
 def _compute_summary(reports, customer_names):
     """يحسب كل الإحصائيات من الـ reports."""
     # agents
-    agents_map = defaultdict(lambda: {'total': 0, 'resolved': 0, 'unresolved': 0, 'mins': []})
+    agents_map = defaultdict(lambda: {'total': 0, 'resolved': 0, 'unresolved': 0, 'unspecified': 0, 'mins': []})
     for r in reports:
         a = r['agent_name']
         agents_map[a]['agent_name'] = a
         agents_map[a]['total']      += 1
-        if r['classification'].startswith('تم حل'):
+        if r['status_label'] == 'Resolved':
             agents_map[a]['resolved'] += 1
-        else:
+        elif r['status_label'] == 'Unresolved':
             agents_map[a]['unresolved'] += 1
+        else:
+            agents_map[a]['unspecified'] += 1
         if r['resolution_minutes']:
             agents_map[a]['mins'].append(r['resolution_minutes'])
 
@@ -142,24 +146,27 @@ def _compute_summary(reports, customer_names):
             'total':                  d['total'],
             'resolved':               d['resolved'],
             'unresolved':             d['unresolved'],
+            'unspecified':            d['unspecified'],
             'avg_resolution_minutes': avg,
         })
     agents.sort(key=lambda x: x['total'], reverse=True)
 
     # customers
-    cust_map = defaultdict(lambda: {'total': 0, 'resolved': 0, 'unresolved': 0, 'mins': [], 'phone': ''})
+    cust_map = defaultdict(lambda: {'total': 0, 'resolved': 0, 'unresolved': 0, 'unspecified': 0, 'mins': [], 'phone': ''})
     rng_phone = random.Random(42)
     for r in reports:
         c = r['customer_name']
         cust_map[c]['total'] += 1
-        if r['classification'].startswith('تم حل'):
+        if r['status_label'] == 'Resolved':
             cust_map[c]['resolved'] += 1
-        else:
+        elif r['status_label'] == 'Unresolved':
             cust_map[c]['unresolved'] += 1
+        else:
+            cust_map[c]['unspecified'] += 1
         if r['resolution_minutes']:
             cust_map[c]['mins'].append(r['resolution_minutes'])
         if not cust_map[c]['phone']:
-           cust_map[c]['phone'] = "00000000000"
+           cust_map[c]['phone'] = f"01{rng_phone.randint(0,2)}{rng_phone.randint(10000000, 99999999)}"
 
     customers = []
     for idx, (name, d) in enumerate(cust_map.items()):
@@ -171,13 +178,15 @@ def _compute_summary(reports, customer_names):
             'total_reports':          d['total'],
             'resolved':               d['resolved'],
             'unresolved':             d['unresolved'],
+            'unspecified':            d['unspecified'],
             'avg_resolution_minutes': avg,
         })
     customers.sort(key=lambda x: x['total_reports'], reverse=True)
 
-    total_reports    = len(reports)
-    total_resolved   = sum(1 for r in reports if r['classification'].startswith('تم حل'))
-    total_unresolved = total_reports - total_resolved
+    total_reports     = len(reports)
+    total_resolved    = sum(1 for r in reports if r['status_label'] == 'Resolved')
+    total_unspecified = sum(1 for r in reports if r['status_label'] == 'Unspecified')
+    total_unresolved  = total_reports - total_resolved - total_unspecified
 
     # common problems
     prob_map = defaultdict(lambda: {'total': 0, 'category_id': None})
@@ -224,12 +233,14 @@ def _compute_summary(reports, customer_names):
     monthly = []
     for agent in agents:
         agent_reports = [r for r in reports if r['agent_name'] == agent['agent_name']]
-        resolved   = sum(1 for r in agent_reports if r['classification'].startswith('تم حل'))
+        resolved     = sum(1 for r in agent_reports if r['status_label'] == 'Resolved')
+        unspecified  = sum(1 for r in agent_reports if r['status_label'] == 'Unspecified')
         monthly.append({
-            'agent_name': agent['agent_name'],
-            'total':      len(agent_reports),
-            'resolved':   resolved,
-            'unresolved': len(agent_reports) - resolved,
+            'agent_name':  agent['agent_name'],
+            'total':       len(agent_reports),
+            'resolved':    resolved,
+            'unresolved':  len(agent_reports) - resolved - unspecified,
+            'unspecified': unspecified,
         })
 
     return {
@@ -239,12 +250,14 @@ def _compute_summary(reports, customer_names):
         'total_reports':             total_reports,
         'total_resolved':            total_resolved,
         'total_unresolved':          total_unresolved,
+        'total_unspecified':         total_unspecified,
         'total_customers':           len(customers),
         'top_agents_resolved':       agents[:5],
         'top_customers':             top_customers,
         'common_problems':           common_problems,
         'resolved_pct':              round(total_resolved / total_reports * 100) if total_reports else 0,
         'unresolved_pct':            round(total_unresolved / total_reports * 100) if total_reports else 0,
+        'unspecified_pct':           round(total_unspecified / total_reports * 100) if total_reports else 0,
         'monthly':                   monthly,
         'traffic_by_date':           traffic_by_date,
         'avg_resolution_overall':    avg_resolution_overall,

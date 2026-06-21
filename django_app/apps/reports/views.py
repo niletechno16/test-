@@ -108,17 +108,25 @@ def reports_list(request):
             if class_filter:
                 data = [r for r in data if class_filter in r['classification']]
             if resolved_type == '1':
-                data = [r for r in data if r['classification'].startswith('تم حل')]
+                data = [r for r in data if r['status_label'] == 'Resolved']
             elif resolved_type == '0':
-                data = [r for r in data if 'لم يتم' in r['classification']]
+                data = [r for r in data if r['status_label'] == 'Unresolved']
+            elif resolved_type == '2':
+                data = [r for r in data if r['status_label'] == 'Unspecified']
+            if category_id_filter != '':
+                try:
+                    cid = int(category_id_filter)
+                    data = [r for r in data if r.get('category_id') == cid]
+                except (ValueError, TypeError):
+                    pass
             if conv_id_filter:
                 data = [r for r in data if str(r.get('conv_id', '')) == conv_id_filter]
             if customer_filter:
                 data = [r for r in data if r.get('customer_name', '') == customer_filter]
             data = sorted(data, key=lambda r: (r['resolved_date'], r.get('resolved_time', '')), reverse=True)
             for r in data:
-                c = r.get('classification', '')
-                r['classification_type'] = 'resolved' if c.startswith('تم حل') else ('unresolved' if 'لم يتم' in c else 'other')
+                sl = r.get('status_label', '')
+                r['classification_type'] = 'resolved' if sl == 'Resolved' else ('unresolved' if sl == 'Unresolved' else 'unspecified')
 
             agents = list(set(r['agent_name'] for r in vdata['reports']))
         except Exception:
@@ -219,10 +227,12 @@ def monthly(request):
                 if a not in agents_seen:
                     agents_seen[a] = {'agent_name': a, 'total': 0, 'resolved': 0, 'unresolved': 0, 'unspecified': 0}
                 agents_seen[a]['total'] += 1
-                if r['classification'].startswith('تم حل'):
+                if r['status_label'] == 'Resolved':
                     agents_seen[a]['resolved'] += 1
-                else:
+                elif r['status_label'] == 'Unresolved':
                     agents_seen[a]['unresolved'] += 1
+                else:
+                    agents_seen[a]['unspecified'] += 1
             data = sorted(agents_seen.values(), key=lambda x: x['total'], reverse=True)
         except Exception:
             data = []

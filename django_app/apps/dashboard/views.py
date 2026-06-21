@@ -94,13 +94,13 @@ def home(request):
             all_reports = vdata['reports']
             filtered    = [r for r in all_reports if df_int <= r['resolved_date'] <= dt_int]
 
-            total_reports    = len(filtered)
-            total_resolved   = sum(1 for r in filtered if r['classification'].startswith('تم حل'))
-            total_unresolved = sum(1 for r in filtered if 'لم يتم' in r['classification'])
-            total_unspecified = 0  # لا يوجد تصنيف "غير محدد" في بيانات الزائر التجريبية
+            total_reports     = len(filtered)
+            total_resolved    = sum(1 for r in filtered if r['status_label'] == 'Resolved')
+            total_unspecified = sum(1 for r in filtered if r['status_label'] == 'Unspecified')
+            total_unresolved  = total_reports - total_resolved - total_unspecified
             resolved_pct     = round(total_resolved   / total_reports * 100) if total_reports else 0
             unresolved_pct   = round(total_unresolved / total_reports * 100) if total_reports else 0
-            unspecified_pct  = 0
+            unspecified_pct  = round(total_unspecified / total_reports * 100) if total_reports else 0
             total_customers  = vdata['total_customers']
 
             avg_mins = [r['resolution_minutes'] for r in filtered if r.get('resolution_minutes')]
@@ -112,10 +112,12 @@ def home(request):
                 if a not in agents_map:
                     agents_map[a] = {'agent_name': a, 'total': 0, 'resolved': 0, 'unresolved': 0, 'unspecified': 0}
                 agents_map[a]['total'] += 1
-                if r['classification'].startswith('تم حل'):
+                if r['status_label'] == 'Resolved':
                     agents_map[a]['resolved'] += 1
-                if 'لم يتم' in r['classification']:
+                elif r['status_label'] == 'Unresolved':
                     agents_map[a]['unresolved'] += 1
+                else:
+                    agents_map[a]['unspecified'] += 1
             top_agents_resolved = sorted(agents_map.values(), key=lambda x: x['total'], reverse=True)[:4]
 
             cust_map = {}
@@ -130,10 +132,11 @@ def home(request):
             prob_map = {}
             for r in filtered:
                 cl = r['classification']
+                key = cl.split(':')[-1].strip() if ':' in cl else cl
                 cid = r.get('category_id', None)
-                if cl not in prob_map:
-                    prob_map[cl] = {'total': 0, 'category_id': cid}
-                prob_map[cl]['total'] += 1
+                if key not in prob_map:
+                    prob_map[key] = {'total': 0, 'category_id': cid}
+                prob_map[key]['total'] += 1
             common_problems = sorted(
                 [{'classification': k, 'total': v['total'], 'category_id': v['category_id']} for k, v in prob_map.items()],
                 key=lambda x: x['total'], reverse=True
