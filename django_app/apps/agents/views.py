@@ -49,23 +49,20 @@ def _filter_reports(reports, date_from, date_to):
 
 
 def _agents_from_reports(all_agents, filtered_reports):
-    stats = defaultdict(lambda: {'total': 0, 'resolved': 0, 'unresolved': 0, 'unspecified': 0, 'mins': []})
+    stats = defaultdict(lambda: {'total': 0, 'resolved': 0, 'unresolved': 0, 'mins': []})
     for r in filtered_reports:
         a = r['agent_name']
         stats[a]['total'] += 1
-        pt = r.get('problem_type')
-        if pt == 1:
+        if r['classification'].startswith('تم حل'):
             stats[a]['resolved'] += 1
-        elif pt == 0:
-            stats[a]['unresolved'] += 1
         else:
-            stats[a]['unspecified'] += 1
+            stats[a]['unresolved'] += 1
         if r.get('resolution_minutes'):
             stats[a]['mins'].append(r['resolution_minutes'])
     result = []
     for agent in all_agents:
         name = agent['agent_name']
-        s    = stats.get(name, {'total': 0, 'resolved': 0, 'unresolved': 0, 'unspecified': 0, 'mins': []})
+        s    = stats.get(name, {'total': 0, 'resolved': 0, 'unresolved': 0, 'mins': []})
         mins = s['mins']
         result.append({
             'agent_id':               agent['agent_id'],
@@ -73,7 +70,7 @@ def _agents_from_reports(all_agents, filtered_reports):
             'total':                  s['total'],
             'resolved':               s['resolved'],
             'unresolved':             s['unresolved'],
-            'unspecified':            s['unspecified'],
+            'unspecified':            0,  # لا يوجد تصنيف "غير محدد" في بيانات الزائر التجريبية
             'avg_resolution_minutes': round(sum(mins)/len(mins)) if mins else None,
         })
     return sorted(result, key=lambda x: x['total'], reverse=True)

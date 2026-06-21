@@ -95,12 +95,12 @@ def home(request):
             filtered    = [r for r in all_reports if df_int <= r['resolved_date'] <= dt_int]
 
             total_reports    = len(filtered)
-            total_resolved   = sum(1 for r in filtered if r.get('problem_type') == 1)
-            total_unspecified = sum(1 for r in filtered if r.get('problem_type') == 2)
-            total_unresolved = total_reports - total_resolved - total_unspecified
+            total_resolved   = sum(1 for r in filtered if r['classification'].startswith('تم حل'))
+            total_unresolved = sum(1 for r in filtered if 'لم يتم' in r['classification'])
+            total_unspecified = 0  # لا يوجد تصنيف "غير محدد" في بيانات الزائر التجريبية
             resolved_pct     = round(total_resolved   / total_reports * 100) if total_reports else 0
             unresolved_pct   = round(total_unresolved / total_reports * 100) if total_reports else 0
-            unspecified_pct  = round(total_unspecified / total_reports * 100) if total_reports else 0
+            unspecified_pct  = 0
             total_customers  = vdata['total_customers']
 
             avg_mins = [r['resolution_minutes'] for r in filtered if r.get('resolution_minutes')]
@@ -112,13 +112,10 @@ def home(request):
                 if a not in agents_map:
                     agents_map[a] = {'agent_name': a, 'total': 0, 'resolved': 0, 'unresolved': 0, 'unspecified': 0}
                 agents_map[a]['total'] += 1
-                pt = r.get('problem_type')
-                if pt == 1:
+                if r['classification'].startswith('تم حل'):
                     agents_map[a]['resolved'] += 1
-                elif pt == 0:
+                if 'لم يتم' in r['classification']:
                     agents_map[a]['unresolved'] += 1
-                else:
-                    agents_map[a]['unspecified'] += 1
             top_agents_resolved = sorted(agents_map.values(), key=lambda x: x['total'], reverse=True)[:4]
 
             cust_map = {}
