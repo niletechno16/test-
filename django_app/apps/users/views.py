@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.http import JsonResponse
+from django.utils import timezone
 from .models import UserProfile, Notification
 from .notifications import notify_login, notify_password_changed
 from db_connection import get_connection
@@ -326,7 +327,7 @@ def notifications_api(request):
             'is_read':    n.is_read,
             'agent_id':   n.agent_id,
             'conv_id':    n.conv_id,
-            'created_at': n.created_at.strftime('%Y-%m-%d %H:%M'),
+            'created_at': timezone.localtime(n.created_at).strftime('%Y-%m-%d %H:%M'),
         })
 
     return JsonResponse({'notifications': data, 'unread_count': unread_count})
