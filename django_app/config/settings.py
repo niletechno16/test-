@@ -7,7 +7,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://*.fly.dev', 'https://*.onpella.app']
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.fly.dev',
+    'https://niletechnoreports.fly.dev',
+    'https://*.onpella.app',
+]
 
 # ---------------- APPS ----------------
 INSTALLED_APPS = [
@@ -96,6 +100,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
+WHITENOISE_MAX_AGE = 31536000
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ---------------- AUTH ----------------
