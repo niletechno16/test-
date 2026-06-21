@@ -104,6 +104,10 @@ WHITENOISE_MAX_AGE = 31536000
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ---------------- AUTH ----------------
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 86400
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = 'Lax'
 LOGIN_URL = '/users/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
