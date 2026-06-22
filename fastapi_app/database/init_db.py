@@ -40,7 +40,7 @@ def init_db():
                     resolve_date        BIGINT,
                     duration_minutes    INT,
                     summary             NVARCHAR(MAX),
-                    created_at          DATETIME DEFAULT GETDATE()
+                    created_at          DATETIME DEFAULT GETDATE() ,
                     status              INT DEFAULT 1 ,  -- 1=active (not archived) | 0=archived
 
                 )
