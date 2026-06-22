@@ -116,13 +116,22 @@ def save_problem(customer_id, prob_type, problem,
         conn   = get_connection()
         cursor = conn.cursor()
         cursor.execute(f"""
-            INSERT INTO {PROBLEM_TABLE}
-                (customer_id, type, problem,
-                 category_id, agent_id, conv_id,
-                 start_message_date, resolve_date, duration_minutes,
-                 summary)
-            VALUES (%d, %d, %s, %d, %d, %s, %d, %d, %d, %s)
+            IF NOT EXISTS (
+                SELECT 1 FROM {PROBLEM_TABLE}
+                WHERE conv_id = %s
+                AND start_message_date = %d
+            )
+            BEGIN
+                INSERT INTO {PROBLEM_TABLE}
+                    (customer_id, type, problem,
+                     category_id, agent_id, conv_id,
+                     start_message_date, resolve_date, duration_minutes,
+                     summary)
+                VALUES (%d, %d, %s, %d, %d, %s, %d, %d, %d, %s)
+            END
         """, (
+            str(conv_id),
+            start_message_date,
             customer_id,
             prob_type,
             problem,
@@ -135,7 +144,11 @@ def save_problem(customer_id, prob_type, problem,
             summary
         ))
         conn.commit()
+        rows_affected = cursor.rowcount
         conn.close()
-        print(f"✅ Problem saved — conv_id:{conv_id} | type:{prob_type} | cat_id:{category_id}")
+        if rows_affected > 0:
+            print(f"✅ Problem saved — conv_id:{conv_id} | type:{prob_type} | cat_id:{category_id}")
+        else:
+            print(f"⏭️  Skipped duplicate — conv_id:{conv_id} | start:{start_message_date}")
     except Exception as e:
         print(f"❌ Problem insert failed: {str(e)}")
