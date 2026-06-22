@@ -6,12 +6,21 @@ from fastapi_app.config.settings import (
 )
 
 
+def _sanitize_cp1256(text):
+    """يشيل أي حرف ما ينفعش يتخزن بترميز CP1256 (مثلاً حروف صينية غريبة
+    ممكن الـ AI يطلعها غلط)، بدل ما الإدخال في الداتابيز يفشل بالكامل."""
+    if not text:
+        return text
+    return text.encode('cp1256', errors='ignore').decode('cp1256')
+
+
 # ================================================================
 # CATEGORY: جلب أو إنشاء — يرجع category_id
 # ================================================================
 def get_or_create_category(category_name: str) -> int:
     if not category_name or not category_name.strip():
         category_name = "غير محدد"
+    category_name = _sanitize_cp1256(category_name)
 
     try:
         conn   = get_connection()
@@ -75,6 +84,7 @@ def get_existing_category_names() -> list:
 def save_user(user_id, user_name, phone, user_type):
     if user_id is None:
         return
+    user_name = _sanitize_cp1256(user_name)
     user_type_label = "Customer" if user_type == 1 else "Customer Support"
     try:
         conn   = get_connection()
@@ -100,6 +110,8 @@ def save_problem(customer_id, prob_type, problem,
                  category_id, agent_id, conv_id,
                  start_message_date, resolve_date,
                  duration_minutes, summary):
+    problem = _sanitize_cp1256(problem)
+    summary = _sanitize_cp1256(summary)
     try:
         conn   = get_connection()
         cursor = conn.cursor()
